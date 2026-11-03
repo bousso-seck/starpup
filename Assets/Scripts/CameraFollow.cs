@@ -1,6 +1,7 @@
 using UnityEngine;
 
-// Makes the camera follow the pupcat smoothly.
+// Makes the camera follow the pupcat smoothly, and shake when something hits (see GameFeel).
+// Attach this to the Main Camera, then drag the Pupcat into the Target slot.
 public class CameraFollow : MonoBehaviour
 {
     // The object the camera follows (drag the Pupcat here in the Inspector).
@@ -14,13 +15,22 @@ public class CameraFollow : MonoBehaviour
     public float smoothTime = 0.15f;
 
     private Vector3 velocity = Vector3.zero;
+    private Vector3 basePosition;   // where the camera would be without any shake
+    private bool started;
 
     // LateUpdate runs after all movement for the frame, which avoids camera jitter.
     void LateUpdate()
     {
         if (target == null) return;
 
+        if (!started)
+        {
+            basePosition = transform.position;
+            started = true;
+        }
+
         Vector3 goal = target.position + offset;
-        transform.position = Vector3.SmoothDamp(transform.position, goal, ref velocity, smoothTime);
+        basePosition = Vector3.SmoothDamp(basePosition, goal, ref velocity, smoothTime);
+        transform.position = basePosition + GameFeel.ShakeOffset;
     }
 }

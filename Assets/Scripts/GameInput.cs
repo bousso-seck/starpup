@@ -68,14 +68,14 @@ public static class GameInput
         }
     }
 
-    // J, or the X button (left button). Not used yet; the parry comes next.
+    // Right mouse click, or the X button (left button) on a controller.
     public static bool ParryPressed
     {
         get
         {
-            Keyboard kb = Keyboard.current;
+            Mouse mouse = Mouse.current;
             Gamepad pad = Gamepad.current;
-            return (kb != null && kb.jKey.wasPressedThisFrame)
+            return (mouse != null && mouse.rightButton.wasPressedThisFrame)
                 || (pad != null && pad.buttonWest.wasPressedThisFrame);
         }
     }

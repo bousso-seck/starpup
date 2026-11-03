@@ -19,7 +19,7 @@ public class EnemyData : ScriptableObject
     public float dodgeRatio = 1.5f;
 
     [Header("Movement")]
-    public float moveSpeed = 5f;
+    public float moveSpeed = 4.5f;
     public float recoverChase = 0.5f;   // 0 = stands still after a swing, 1 = keeps chasing at full speed
 
     [Header("Attack")]
@@ -36,4 +36,8 @@ public class EnemyData : ScriptableObject
     public int swingsPerAttack = 2;         // swings in a row before they pause
     public float comboTelegraphTime = 0.2f; // wind-up for each follow-up swing
     public float comboGap = 0.15f;          // pause between swings in a combo
+
+    [Header("Parry")]
+    public bool canBeParried = true;    // turn off for enemies whose swings can't be parried
+    public float parryStunTime = 1.2f;  // how long a parried enemy is staggered
 }

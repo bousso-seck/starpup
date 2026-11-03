@@ -61,6 +61,8 @@ public class PupcatHealth : MonoBehaviour
         Points = Mathf.Max(0, Points - remaining);
 
         controller.Knockback(new Vector2(pushDirection * knockbackSpeed, knockbackUp), knockbackTime);
+        GameFeel.HitStop(0.08f);
+        GameFeel.Shake(0.2f, 0.2f);
         Debug.Log("Pupcat took " + amount + " damage. Hearts: " + Points / 2f + " + bonus " + BonusPoints / 2f);
 
         if (Points <= 0) Defeat();

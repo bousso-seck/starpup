@@ -8,7 +8,7 @@ public class Enemy : MonoBehaviour
 {
     public EnemyData data;
 
-    public enum State { Approach, Telegraph, Recover, Exhausted, Defeated }
+    public enum State { Approach, Telegraph, Recover, Stunned, Exhausted, Defeated }
     public State CurrentState { get; private set; }
 
     private float health;
@@ -29,6 +29,14 @@ public class Enemy : MonoBehaviour
     private float whiffDrain; // stamina lost per missed swing (worked out in Start)
 
     private PupcatHealth playerHealth; // where a connecting swing takes its damage
+    private PupcatParry playerParry;   // tells us if the guard is up when a swing lands
+    private int parries;               // how many times this enemy has been parried
+
+    private float flashEndTime;        // white hit-flash runs until this time
+    private float knockEndTime;        // brief shove after being struck
+    private const float HitFlashTime = 0.08f;
+    private const float HitKnockSpeed = 5f;
+    private const float HitKnockTime = 0.1f;
     private Collider2D playerBody;  // the pupcat's collider, used to see if the swing connects
     private float edge = 0.5f;      // how far the enemy's body reaches sideways from its center
 
@@ -75,6 +83,7 @@ public class Enemy : MonoBehaviour
         Collider2D mine = GetComponent<Collider2D>();
         playerBody = player.GetComponent<Collider2D>();
         playerHealth = player.GetComponent<PupcatHealth>();
+        playerParry = player.GetComponent<PupcatParry>();
         if (mine != null && playerBody != null) Physics2D.IgnoreCollision(mine, playerBody);
         if (mine != null) edge = mine.bounds.extents.x;
 
@@ -97,6 +106,16 @@ public class Enemy : MonoBehaviour
         {
             swingZone.enabled = false;
         }
+
+        // End the white hit-flash, going back to the color this state should have.
+        if (flashEndTime > 0f && Time.time >= flashEndTime)
+        {
+            flashEndTime = 0f;
+            sprite.color = StateColor();
+        }
+
+        // While being shoved by a strike, the enemy can't act. Hits briefly interrupt it.
+        if (Time.time < knockEndTime) return;
 
         switch (CurrentState)
         {
@@ -136,14 +155,36 @@ public class Enemy : MonoBehaviour
                 }
                 break;
 
+            case State.Stunned:
+                // Parried: reeling in place until the stun runs out.
+                rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+                if (Time.time >= stateEndTime)
+                {
+                    sprite.color = data.bodyColor;
+                    CurrentState = State.Approach;
+                }
+                break;
+
             case State.Exhausted:
                 rb.linearVelocity = new Vector2(retreatDir * data.moveSpeed, rb.linearVelocity.y);
                 if (Time.time >= stateEndTime)
                 {
-                    Debug.Log(data.characterName + ": OUTCOME = retreated (exhausted)");
+                    Debug.Log(data.characterName + ": OUTCOME = retreated (exhausted). Parries landed: " + parries);
                     gameObject.SetActive(false);
                 }
                 break;
+        }
+    }
+
+    Color StateColor()
+    {
+        switch (CurrentState)
+        {
+            case State.Telegraph: return new Color(1f, 1f, 0.3f);
+            case State.Stunned: return new Color(0.5f, 0.9f, 1f);
+            case State.Exhausted: return new Color(0.6f, 0.6f, 0.6f);
+            case State.Defeated: return new Color(0.25f, 0.25f, 0.25f);
+            default: return data.bodyColor;
         }
     }
 
@@ -160,13 +201,27 @@ public class Enemy : MonoBehaviour
     {
         // The swing connects if ANY part of the pupcat's body is inside the danger zone.
         // Stepping back but staying partly inside the box still gets you hit.
-        bool hit = PlayerInZone() && !player.IsInvincible;
+        bool inZone = PlayerInZone() && !player.IsInvincible;
+
+        // A swing that would land is parried if the guard is up and this enemy allows it.
+        bool parried = inZone && data.canBeParried && playerParry != null && playerParry.IsParrying;
+        bool hit = inZone && !parried;
 
         // Flash the danger zone red so the swing is visible.
         ShowZone(new Color(1f, 0.2f, 0.2f, 0.65f));
         zoneHideTime = Time.time + 0.2f;
 
-        if (hit)
+        if (parried)
+        {
+            // A parry counts as a clean dodge for stamina, and it also staggers the enemy.
+            stamina -= whiffDrain;
+            parries++;
+            UpdateBars();
+            Debug.Log(data.characterName + " was PARRIED (" + parries + " so far). Stamina: " + Mathf.Max(stamina, 0f));
+            GameFeel.HitStop(0.1f);
+            GameFeel.Shake(0.1f, 0.15f);
+        }
+        else if (hit)
         {
             // A full attack (all swings) deals attackDamage, so each swing deals its share.
             float swingDamage = data.attackDamage / Mathf.Max(1, data.swingsPerAttack);
@@ -194,6 +249,14 @@ public class Enemy : MonoBehaviour
             sprite.color = new Color(0.6f, 0.6f, 0.6f); // grey = embarrassed
             CurrentState = State.Exhausted;
         }
+        else if (parried)
+        {
+            // Combo broken: no more swings, just a stagger.
+            swingsLeft = 0;
+            stateEndTime = Time.time + data.parryStunTime;
+            sprite.color = new Color(0.5f, 0.9f, 1f); // light blue = staggered
+            CurrentState = State.Stunned;
+        }
         else
         {
             swingsLeft--;
@@ -212,8 +275,18 @@ public class Enemy : MonoBehaviour
         health -= amount;
         UpdateBars();
 
+        // Make the hit feel solid: white flash, a small shove away, a tiny freeze, a camera bump.
+        sprite.color = Color.white;
+        flashEndTime = Time.time + HitFlashTime;
+        float away = transform.position.x >= player.transform.position.x ? 1f : -1f;
+        rb.linearVelocity = new Vector2(away * HitKnockSpeed, rb.linearVelocity.y);
+        knockEndTime = Time.time + HitKnockTime;
+        GameFeel.HitStop(health <= 0f ? 0.14f : 0.06f);
+        GameFeel.Shake(health <= 0f ? 0.18f : 0.08f, 0.12f);
+
         if (health <= 0f)
         {
+            flashEndTime = 0f;
             CurrentState = State.Defeated;
             swingZone.enabled = false;
             rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
