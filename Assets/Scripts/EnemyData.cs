@@ -8,7 +8,8 @@ public class EnemyData : ScriptableObject
 {
     [Header("Identity")]
     public string characterName = "Test Classmate";
-    public bool isPossessed = false;
+    public bool isPossessed = false;    // tick for possessed classmates: every parry counts as an attack
+                                        // (leave off for rivals, who get the Haunt Line allowance)
     public Color bodyColor = new Color(1f, 0.55f, 0.1f);
 
     [Header("Bars")]
@@ -17,6 +18,11 @@ public class EnemyData : ScriptableObject
     // How many times more dodges than strikes it takes to beat this enemy.
     // 1.5 = dodging takes 50% longer. The game works out the stamina drain per miss from this.
     public float dodgeRatio = 1.5f;
+
+    [Header("Awareness")]
+    public float noticeRange = 7f;      // how close the pupcat must get before this enemy wakes up and attacks.
+                                        // 0 = always awake. About 9 is the edge of the screen. Click the enemy in
+                                        // the Scene view to see the range as a yellow box.
 
     [Header("Movement")]
     public float moveSpeed = 4.5f;
@@ -40,4 +46,6 @@ public class EnemyData : ScriptableObject
     [Header("Parry")]
     public bool canBeParried = true;    // turn off for enemies whose swings can't be parried
     public float parryStunTime = 1.2f;  // how long a parried enemy is staggered
+    public float parryDamage = 8f;      // health a parry takes off (parrying counts as attacking)
+    public float hauntLine = 0.4f;      // rivals only: parry damage over this share of max health = a full haunt
 }

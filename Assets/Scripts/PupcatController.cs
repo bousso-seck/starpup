@@ -25,9 +25,11 @@ public class PupcatController : MonoBehaviour
     private float dodgeEndTime;
     private float nextDodgeTime;
     private float knockbackEndTime;
+    private Collider2D body;
 
     void Awake()
     {
+        body = GetComponent<Collider2D>();
         rb = GetComponent<Rigidbody2D>();
         sprite = GetComponent<SpriteRenderer>();
         if (sprite != null) normalColor = sprite.color;
@@ -64,6 +66,8 @@ public class PupcatController : MonoBehaviour
         if (GameInput.JumpPressed && isGrounded)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+            GameFeel.Play(GameFeel.Sound.Jump);
+            GameFeel.Dust(Feet(), 3, 0f);
         }
 
         // Start a roll with Left Shift (or the B button on an Xbox-style controller).
@@ -78,6 +82,9 @@ public class PupcatController : MonoBehaviour
         IsDodging = true;
         dodgeEndTime = Time.time + dodgeDuration;
         nextDodgeTime = Time.time + dodgeDuration + dodgeCooldown;
+
+        GameFeel.Play(GameFeel.Sound.Roll);
+        GameFeel.Dust(Feet(), 4, -FacingDirection); // kicked up behind the roll
 
         // Make the pupcat see-through during the roll, so you can see the invincible window.
         if (sprite != null)
@@ -108,8 +115,21 @@ public class PupcatController : MonoBehaviour
         // Only count it as ground if the surface is pointing mostly upward.
         if (collision.GetContact(0).normal.y > 0.5f)
         {
+            // Landing after a real fall (not just walking over a bump) gets a thud and some dust.
+            if (!isGrounded && Mathf.Abs(collision.relativeVelocity.y) > 4f)
+            {
+                GameFeel.Play(GameFeel.Sound.Land);
+                GameFeel.Dust(Feet(), 4, 0f);
+            }
             isGrounded = true;
         }
+    }
+
+    // The point at the bottom of the pupcat, where dust should appear.
+    Vector3 Feet()
+    {
+        float y = (body != null) ? body.bounds.min.y : transform.position.y - 0.5f;
+        return new Vector3(transform.position.x, y, 0f);
     }
 
     // Called by Unity when we stop touching something.

@@ -31,6 +31,34 @@ public class Enemy : MonoBehaviour
     private PupcatHealth playerHealth; // where a connecting swing takes its damage
     private PupcatParry playerParry;   // tells us if the guard is up when a swing lands
     private int parries;               // how many times this enemy has been parried
+    private bool noticed;              // true once the pupcat got close enough to wake the enemy
+
+    // The consequence rule: parrying counts as attacking. A little is a mild haunt, but once the
+    // parry damage passes hauntLine (40%) of their max health it counts as a full attack.
+    // A direct strike is a full attack right away.
+    public enum Consequence { None, MildHaunt, FullHaunt }
+    private float parryDamageTotal;    // health taken off by parries so far
+    private bool struckDirectly;       // true once a real strike has landed
+    private Transform parryBar;        // shows how close the parry total is to the haunt line
+
+    // How much parry damage is tolerated before it counts as a full attack.
+    // Rivals respect a skilled parry, so they get the haunt line (40% of max health).
+    // Possessed classmates get none: for them, every parry counts as an attack.
+    private float ParryLimit
+    {
+        get { return data.isPossessed ? 0f : data.maxHealth * data.hauntLine; }
+    }
+
+    public Consequence CurrentConsequence
+    {
+        get
+        {
+            if (struckDirectly || CurrentState == State.Defeated) return Consequence.FullHaunt;
+            if (parryDamageTotal > ParryLimit) return Consequence.FullHaunt;
+            if (parryDamageTotal > 0f) return Consequence.MildHaunt;
+            return Consequence.None;
+        }
+    }
 
     private float flashEndTime;        // white hit-flash runs until this time
     private float knockEndTime;        // brief shove after being struck
@@ -69,6 +97,7 @@ public class Enemy : MonoBehaviour
 
         health = data.maxHealth;
         stamina = data.maxStamina;
+        noticed = data.noticeRange <= 0f; // 0 means always awake
 
         // Work out how much stamina each miss drains, so beating this enemy by dodging takes
         // dodgeRatio times as many misses as it takes strikes. Nobody sets this by hand.
@@ -89,6 +118,8 @@ public class Enemy : MonoBehaviour
 
         healthBar = MakeBar("HealthBar", 0.9f, new Color(0.9f, 0.2f, 0.2f));
         staminaBar = MakeBar("StaminaBar", 1.08f, new Color(1f, 0.85f, 0.2f));
+        parryBar = MakeBar("ParryBar", 1.26f, new Color(0.3f, 0.9f, 1f));
+        UpdateBars();
         swingZone = MakeSwingZone();
 
         CurrentState = State.Approach;
@@ -116,6 +147,20 @@ public class Enemy : MonoBehaviour
 
         // While being shoved by a strike, the enemy can't act. Hits briefly interrupt it.
         if (Time.time < knockEndTime) return;
+
+        // Asleep until the pupcat comes within noticeRange. After that it stays awake.
+        if (!noticed)
+        {
+            if (Mathf.Abs(dx) <= data.noticeRange)
+            {
+                noticed = true;
+            }
+            else
+            {
+                rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+                return;
+            }
+        }
 
         switch (CurrentState)
         {
@@ -169,11 +214,19 @@ public class Enemy : MonoBehaviour
                 rb.linearVelocity = new Vector2(retreatDir * data.moveSpeed, rb.linearVelocity.y);
                 if (Time.time >= stateEndTime)
                 {
-                    Debug.Log(data.characterName + ": OUTCOME = retreated (exhausted). Parries landed: " + parries);
+                    Debug.Log(data.characterName + ": OUTCOME = retreated (exhausted). Parries landed: " + parries + ". Consequence: " + CurrentConsequence);
                     gameObject.SetActive(false);
                 }
                 break;
         }
+    }
+
+    // In the Scene view, selecting the enemy draws a yellow box showing its notice range.
+    void OnDrawGizmosSelected()
+    {
+        if (data == null || data.noticeRange <= 0f) return;
+        Gizmos.color = new Color(1f, 0.9f, 0.2f, 0.9f);
+        Gizmos.DrawWireCube(transform.position, new Vector3(data.noticeRange * 2f, 6f, 0f));
     }
 
     Color StateColor()
@@ -209,17 +262,32 @@ public class Enemy : MonoBehaviour
 
         // Flash the danger zone red so the swing is visible.
         ShowZone(new Color(1f, 0.2f, 0.2f, 0.65f));
+        GameFeel.Play(GameFeel.Sound.Swing);
         zoneHideTime = Time.time + 0.2f;
 
         if (parried)
         {
-            // A parry counts as a clean dodge for stamina, and it also staggers the enemy.
+            // A parry counts as a clean dodge for stamina, it staggers the enemy, and because
+            // parrying counts as attacking it also takes a little health.
             stamina -= whiffDrain;
+            health -= data.parryDamage;
+            parryDamageTotal += data.parryDamage;
             parries++;
             UpdateBars();
-            Debug.Log(data.characterName + " was PARRIED (" + parries + " so far). Stamina: " + Mathf.Max(stamina, 0f));
+            float share = parryDamageTotal / data.maxHealth * 100f;
+            Debug.Log(data.characterName + " was PARRIED (" + parries + " so far). Parry damage: " + Mathf.RoundToInt(share)
+                + "% of max health (" + (data.isPossessed ? "possessed: any parry is a full attack" : "rival: full haunt over " + Mathf.RoundToInt(data.hauntLine * 100f) + "%")
+                + "). Stamina: " + Mathf.Max(stamina, 0f));
             GameFeel.HitStop(0.1f);
             GameFeel.Shake(0.1f, 0.15f);
+            GameFeel.Play(GameFeel.Sound.Parry);
+
+            // Parried to zero health: that is a defeat, not a stagger.
+            if (health <= 0f)
+            {
+                Defeat();
+                return;
+            }
         }
         else if (hit)
         {
@@ -273,6 +341,8 @@ public class Enemy : MonoBehaviour
         if (CurrentState == State.Defeated || CurrentState == State.Exhausted) return;
 
         health -= amount;
+        noticed = true;        // getting hit wakes it up
+        struckDirectly = true; // a direct strike is a full attack
         UpdateBars();
 
         // Make the hit feel solid: white flash, a small shove away, a tiny freeze, a camera bump.
@@ -281,18 +351,22 @@ public class Enemy : MonoBehaviour
         float away = transform.position.x >= player.transform.position.x ? 1f : -1f;
         rb.linearVelocity = new Vector2(away * HitKnockSpeed, rb.linearVelocity.y);
         knockEndTime = Time.time + HitKnockTime;
+        GameFeel.Play(GameFeel.Sound.Hit);
         GameFeel.HitStop(health <= 0f ? 0.14f : 0.06f);
         GameFeel.Shake(health <= 0f ? 0.18f : 0.08f, 0.12f);
 
-        if (health <= 0f)
-        {
-            flashEndTime = 0f;
-            CurrentState = State.Defeated;
-            swingZone.enabled = false;
-            rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
-            sprite.color = new Color(0.25f, 0.25f, 0.25f);
-            Debug.Log(data.characterName + ": OUTCOME = defeated");
-        }
+        if (health <= 0f) Defeat();
+    }
+
+    void Defeat()
+    {
+        GameFeel.Play(GameFeel.Sound.Defeat);
+        flashEndTime = 0f;
+        CurrentState = State.Defeated;
+        swingZone.enabled = false;
+        rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+        sprite.color = new Color(0.25f, 0.25f, 0.25f);
+        Debug.Log(data.characterName + ": OUTCOME = defeated. Consequence: " + CurrentConsequence);
     }
 
     // Builds the (hidden) danger-zone box that shows where a swing reaches.
@@ -340,6 +414,13 @@ public class Enemy : MonoBehaviour
         float s = Mathf.Clamp01(stamina / data.maxStamina);
         healthBar.localScale = new Vector3(BarWidth * h, BarHeight, 1f);
         staminaBar.localScale = new Vector3(BarWidth * s, BarHeight, 1f);
+
+        // The thin cyan bar fills as parries add up. Full = the haunt line. Past it, it turns red.
+        float limit = ParryLimit;
+        float p = Mathf.Clamp01(parryDamageTotal / Mathf.Max(limit, 0.01f));
+        parryBar.localScale = new Vector3(BarWidth * p, BarHeight * 0.6f, 1f);
+        parryBar.GetComponent<SpriteRenderer>().color =
+            (parryDamageTotal > limit) ? new Color(1f, 0.3f, 0.3f) : new Color(0.3f, 0.9f, 1f);
     }
 
     // Builds a dark back strip and a colored fill strip above the enemy.

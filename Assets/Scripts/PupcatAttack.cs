@@ -37,6 +37,7 @@ public class PupcatAttack : MonoBehaviour
         Collider2D[] found = Physics2D.OverlapBoxAll(center, new Vector2(reach, 1.2f), 0f);
 
         ShowSlash(controller.FacingDirection * forward);
+        GameFeel.Play(GameFeel.Sound.Swing);
 
         foreach (Collider2D c in found)
         {

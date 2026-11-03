@@ -63,6 +63,7 @@ public class PupcatHealth : MonoBehaviour
         controller.Knockback(new Vector2(pushDirection * knockbackSpeed, knockbackUp), knockbackTime);
         GameFeel.HitStop(0.08f);
         GameFeel.Shake(0.2f, 0.2f);
+        GameFeel.Play(GameFeel.Sound.Hurt);
         Debug.Log("Pupcat took " + amount + " damage. Hearts: " + Points / 2f + " + bonus " + BonusPoints / 2f);
 
         if (Points <= 0) Defeat();
@@ -85,6 +86,7 @@ public class PupcatHealth : MonoBehaviour
         IsDefeated = true;
         if (sprite != null) sprite.enabled = true;
         Debug.Log("Out of courage hearts. Going home.");
+        GameFeel.Play(GameFeel.Sound.Defeat);
 
         Rigidbody2D rb = GetComponent<Rigidbody2D>();
         if (rb != null) rb.linearVelocity = Vector2.zero;

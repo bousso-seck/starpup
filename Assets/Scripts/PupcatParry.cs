@@ -38,6 +38,7 @@ public class PupcatParry : MonoBehaviour
         {
             parryEndTime = Time.time + parryWindow;
             nextParryTime = Time.time + cooldown;
+            GameFeel.Play(GameFeel.Sound.Guard);
         }
 
         // A cyan box around the pupcat shows the guard is up.

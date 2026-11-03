@@ -18,14 +18,19 @@ MonoBehaviour:
   maxHealth: 100
   maxStamina: 100
   dodgeRatio: 1.5
-  moveSpeed: 5
+  moveSpeed: 4.5
   recoverChase: 0.5
   attackRange: 2
   hitRange: 2.2
   hitHeight: 1.2
+  attackDamage: 2
   telegraphTime: 0.2
   recoverTime: 0.3
   exhaustedTime: 2
   swingsPerAttack: 2
   comboTelegraphTime: 0.1
   comboGap: 0.15
+  canBeParried: 1
+  parryStunTime: 1.2
+  parryDamage: 8
+  hauntLine: 0.4
