@@ -38,6 +38,7 @@ public class PupcatController : MonoBehaviour
     private bool crouchLocked; // after a jump, crouch stays off until the key is let go
     private bool airDashUsed;  // one dash per jump; landing gives it back
     private bool dashInAir;    // true while the current roll is an air dash
+    private float nextTrail;   // when the next little dash puff is allowed
 
     void Awake()
     {
@@ -74,6 +75,13 @@ public class PupcatController : MonoBehaviour
 
             // An air dash flies straight sideways. A ground roll keeps its up/down speed.
             rb.linearVelocity = new Vector2(FacingDirection * dodgeSpeed, dashInAir ? 0f : rb.linearVelocity.y);
+
+            // Smaller puffs of the dash dust left behind while rolling.
+            if (Time.time >= nextTrail)
+            {
+                nextTrail = Time.time + 0.1f;
+                DashEffect.Play(dashInAir ? transform.position + Vector3.down * 0.4f : Feet(), -FacingDirection, dashInAir ? 0.8f : 0.9f, 0.6f);
+            }
 
             if (Time.time >= dodgeEndTime)
             {
@@ -129,7 +137,10 @@ public class PupcatController : MonoBehaviour
         nextDodgeTime = Time.time + dodgeDuration + dodgeCooldown;
 
         GameFeel.Play(dashInAir ? GameFeel.Sound.Dash : GameFeel.Sound.Roll);
-        if (!dashInAir) GameFeel.Dust(Feet(), 4, -FacingDirection); // kicked up behind the roll
+        // The dash dust sprite. (If the sprite sheet is missing, the old dust particles are used.)
+        Vector3 dustSpot = dashInAir ? transform.position + Vector3.down * 0.4f : Feet();
+        bool drewDust = DashEffect.Play(dustSpot, -FacingDirection, dashInAir ? 1.2f : 1.6f, dashInAir ? 0.7f : 1f);
+        if (!drewDust && !dashInAir) GameFeel.Dust(Feet(), 4, -FacingDirection);
 
         // Make the pupcat see-through during the roll, so you can see the invincible window.
         if (sprite != null)
