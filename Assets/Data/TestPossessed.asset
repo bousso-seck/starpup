@@ -18,6 +18,7 @@ MonoBehaviour:
   maxHealth: 100
   maxStamina: 100
   dodgeRatio: 1.5
+  noticeRange: 7
   moveSpeed: 4.5
   recoverChase: 0.5
   attackRange: 2
@@ -34,3 +35,9 @@ MonoBehaviour:
   parryStunTime: 1.2
   parryDamage: 8
   hauntLine: 0.4
+  leavesSpirit: 1
+  spiritFlamePrefab: {fileID: 8432909782336463786, guid: 8e88b6dc5bc8f490288d92dd23f260a6, type: 3}
+  parryPushEnemy: 4
+  parryEnemyStagger: 0.25
+  parryPushPupcat: 2
+  parryPupcatStagger: 0.12

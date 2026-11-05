@@ -7,8 +7,14 @@ using UnityEngine;
 //   GameFeel.HitStop(seconds)        a tiny freeze when something hits
 //   GameFeel.Shake(strength, secs)   camera shake
 //   GameFeel.Dust(position, count)   little dust puffs
-//   GameFeel.Play(GameFeel.Sound.X)  a placeholder sound, made from code (no audio files needed)
-// The sounds are simple beeps and thumps so the fight has audio feedback until real sounds exist.
+//   GameFeel.SlowMo(scale, secs)     slow motion (0.5 = half speed), e.g. for a close dodge
+//   GameFeel.Play(GameFeel.Sound.X)  a sound. By default a beep or thump made from code.
+//
+// TO USE REAL SOUNDS: make the folder Assets/Resources/Sfx and drop in audio files named exactly like
+// the sounds: Swing, Hit, Parry, Guard, Hurt, Jump, Land, Roll, Defeat, Heavy, Finisher, Dash
+// (for example Assets/Resources/Sfx/Hit.wav). Roll = the ground roll, Dash = the air dash. A file with a matching name replaces the placeholder.
+// For several versions of one sound, number them: Roll1.wav, Roll2.wav, Roll3.wav (up to 9).
+// One of them is picked at random each time, so repeated sounds don't get boring.
 // Needs an Audio Listener in the scene (the Main Camera has one by default).
 public class GameFeel : MonoBehaviour
 {
@@ -17,7 +23,7 @@ public class GameFeel : MonoBehaviour
     // The camera adds this to its position every frame (see CameraFollow).
     public static Vector3 ShakeOffset { get; private set; }
 
-    public enum Sound { Swing, Hit, Parry, Guard, Hurt, Jump, Land, Roll, Defeat }
+    public enum Sound { Swing, Hit, Parry, Guard, Hurt, Jump, Land, Roll, Defeat, Heavy, Finisher, Dash }
 
     private const float MasterVolume = 0.7f; // turn all the placeholder sounds up or down here
 
@@ -26,9 +32,13 @@ public class GameFeel : MonoBehaviour
     private float shakeEnd;
     private float freezeEnd;
     private bool frozen;
+    private float slowScale = 1f;
+    private float slowEnd;
+    private bool slowActive;
 
     private AudioSource audioSource;
     private AudioClip[] clips;
+    private AudioClip[][] variants; // every sound can have several versions; one is picked at random
     private Sprite dustSprite;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -56,6 +66,26 @@ public class GameFeel : MonoBehaviour
         clips[(int)Sound.Land]   = MakeClip(0.10f, 90f, 50f, 0.4f, 28f, 0.45f);     // soft thud
         clips[(int)Sound.Roll]   = MakeClip(0.20f, 200f, 200f, 0.95f, 9f, 0.3f);    // scuff
         clips[(int)Sound.Defeat] = MakeClip(0.40f, 200f, 40f, 0.4f, 6f, 0.7f);     // sinking
+        clips[(int)Sound.Heavy]    = MakeClip(0.22f, 220f, 70f, 0.7f, 12f, 0.5f);   // big whoosh
+        clips[(int)Sound.Finisher] = MakeClip(0.28f, 400f, 90f, 0.6f, 10f, 0.55f);  // sharp swoosh
+
+        clips[(int)Sound.Dash]     = MakeClip(0.16f, 700f, 250f, 0.85f, 14f, 0.3f);  // airy whoosh
+
+        // Real sound files in Assets/Resources/Sfx replace the placeholders above.
+        // "Roll" is one file; "Roll1", "Roll2", ... are several versions to pick from at random.
+        variants = new AudioClip[clips.Length][];
+        foreach (Sound s in System.Enum.GetValues(typeof(Sound)))
+        {
+            var found = new System.Collections.Generic.List<AudioClip>();
+            AudioClip single = Resources.Load<AudioClip>("Sfx/" + s);
+            if (single != null) found.Add(single);
+            for (int n = 1; n <= 9; n++)
+            {
+                AudioClip numbered = Resources.Load<AudioClip>("Sfx/" + s + n);
+                if (numbered != null) found.Add(numbered);
+            }
+            variants[(int)s] = (found.Count > 0) ? found.ToArray() : new AudioClip[] { clips[(int)s] };
+        }
 
         // A 1x1 white pixel, centered, used for the dust puffs.
         Texture2D tex = new Texture2D(1, 1);
@@ -94,7 +124,8 @@ public class GameFeel : MonoBehaviour
     public static void Play(Sound sound)
     {
         if (instance == null || instance.audioSource == null) return;
-        instance.audioSource.PlayOneShot(instance.clips[(int)sound], MasterVolume);
+        AudioClip[] options = instance.variants[(int)sound];
+        instance.audioSource.PlayOneShot(options[Random.Range(0, options.Length)], MasterVolume);
     }
 
     // Freezes the whole game for a split second, so a hit feels heavy.
@@ -102,6 +133,16 @@ public class GameFeel : MonoBehaviour
     {
         if (instance == null) return;
         instance.StartFreeze(seconds);
+    }
+
+    // Slows the game down for a moment. scale 0.5 = half speed. Time here is real seconds.
+    public static void SlowMo(float scale, float seconds)
+    {
+        if (instance == null) return;
+        instance.slowScale = Mathf.Clamp(scale, 0.05f, 1f);
+        instance.slowEnd = Time.unscaledTime + seconds;
+        instance.slowActive = true;
+        if (!instance.frozen) Time.timeScale = instance.slowScale;
     }
 
     // Shakes the camera. strength is in world units (0.1 is a small bump), then it fades out.
@@ -169,12 +210,19 @@ public class GameFeel : MonoBehaviour
         frozen = true;
         Time.timeScale = 0f;
         while (Time.unscaledTime < freezeEnd) yield return null;
-        Time.timeScale = 1f;
+        Time.timeScale = (slowActive && Time.unscaledTime < slowEnd) ? slowScale : 1f;
         frozen = false;
     }
 
     void Update()
     {
+        // End the slow motion when its time is up. (Only touches the speed while a slow-mo is active.)
+        if (slowActive && !frozen && Time.unscaledTime >= slowEnd)
+        {
+            slowActive = false;
+            Time.timeScale = 1f;
+        }
+
         float remaining = shakeEnd - Time.unscaledTime;
         if (remaining > 0f)
         {
@@ -189,6 +237,3 @@ public class GameFeel : MonoBehaviour
         }
     }
 }
-
-
-

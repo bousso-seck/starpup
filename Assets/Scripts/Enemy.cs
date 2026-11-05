@@ -33,35 +33,39 @@ public class Enemy : MonoBehaviour
     private int parries;               // how many times this enemy has been parried
     private bool noticed;              // true once the pupcat got close enough to wake the enemy
 
-    // The consequence rule: parrying counts as attacking. A little is a mild haunt, but once the
-    // parry damage passes hauntLine (40%) of their max health it counts as a full attack.
-    // A direct strike is a full attack right away.
-    public enum Consequence { None, MildHaunt, FullHaunt }
+    // The consequence rule (from the design doc):
+    //  Rival:     parries up to hauntLine (40%) of their max health earn RESPECT (the best result).
+    //             Past that, the parries count as a full attack. Dodging them tired = mildly upset.
+    //  Possessed: dodging them tired leaves no mark. ANY parry counts as an attack (a mild haunt).
+    //  Anyone:    a direct strike, or defeating them, is a full haunt.
+    public enum Consequence { None, Respect, MildHaunt, FullHaunt }
     private float parryDamageTotal;    // health taken off by parries so far
     private bool struckDirectly;       // true once a real strike has landed
     private Transform parryBar;        // shows how close the parry total is to the haunt line
-
-    // How much parry damage is tolerated before it counts as a full attack.
-    // Rivals respect a skilled parry, so they get the haunt line (40% of max health).
-    // Possessed classmates get none: for them, every parry counts as an attack.
-    private float ParryLimit
-    {
-        get { return data.isPossessed ? 0f : data.maxHealth * data.hauntLine; }
-    }
 
     public Consequence CurrentConsequence
     {
         get
         {
             if (struckDirectly || CurrentState == State.Defeated) return Consequence.FullHaunt;
-            if (parryDamageTotal > ParryLimit) return Consequence.FullHaunt;
-            if (parryDamageTotal > 0f) return Consequence.MildHaunt;
-            return Consequence.None;
+
+            if (data.isPossessed)
+            {
+                // Dodging alone leaves no mark, but any parry counts as an attack.
+                return parryDamageTotal > 0f ? Consequence.MildHaunt : Consequence.None;
+            }
+
+            // Rival: parries up to the haunt line earn respect, past it they count as a full attack.
+            if (parryDamageTotal > data.maxHealth * data.hauntLine) return Consequence.FullHaunt;
+            if (parries > 0) return Consequence.Respect;
+            return Consequence.MildHaunt; // dodged until tired: it resolves, but they are mildly upset
         }
     }
 
     private float flashEndTime;        // white hit-flash runs until this time
     private float knockEndTime;        // brief shove after being struck
+    private float staggerVelocity;     // sideways shove when parried
+    private float staggerEnd;
     private const float HitFlashTime = 0.08f;
     private const float HitKnockSpeed = 5f;
     private const float HitKnockTime = 0.1f;
@@ -201,8 +205,9 @@ public class Enemy : MonoBehaviour
                 break;
 
             case State.Stunned:
-                // Parried: reeling in place until the stun runs out.
-                rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+                // Parried: pushed back a little, then reeling in place until the stun runs out.
+                float shoveLeft = Mathf.Clamp01((staggerEnd - Time.time) / Mathf.Max(0.01f, data.parryEnemyStagger));
+                rb.linearVelocity = new Vector2(staggerVelocity * shoveLeft, rb.linearVelocity.y);
                 if (Time.time >= stateEndTime)
                 {
                     sprite.color = data.bodyColor;
@@ -276,11 +281,17 @@ public class Enemy : MonoBehaviour
             UpdateBars();
             float share = parryDamageTotal / data.maxHealth * 100f;
             Debug.Log(data.characterName + " was PARRIED (" + parries + " so far). Parry damage: " + Mathf.RoundToInt(share)
-                + "% of max health (" + (data.isPossessed ? "possessed: any parry is a full attack" : "rival: full haunt over " + Mathf.RoundToInt(data.hauntLine * 100f) + "%")
+                + "% of max health (" + (data.isPossessed ? "possessed: any parry counts as an attack (mild haunt)" : "rival: respect up to " + Mathf.RoundToInt(data.hauntLine * 100f) + "%, then a full attack")
                 + "). Stamina: " + Mathf.Max(stamina, 0f));
             GameFeel.HitStop(0.1f);
             GameFeel.Shake(0.1f, 0.15f);
             GameFeel.Play(GameFeel.Sound.Parry);
+
+            // Both stagger. How far each one is pushed comes from the Enemy Data (parryPush...).
+            float awayFromEnemy = (player.transform.position.x >= transform.position.x) ? 1f : -1f;
+            player.Shove(awayFromEnemy * data.parryPushPupcat, data.parryPupcatStagger);
+            staggerVelocity = -awayFromEnemy * data.parryPushEnemy;
+            staggerEnd = Time.time + data.parryEnemyStagger;
 
             // Parried to zero health: that is a defeat, not a stagger.
             if (health <= 0f)
@@ -306,6 +317,12 @@ public class Enemy : MonoBehaviour
             // Each swing is judged on its own, so a hit on one swing never cancels a dodge on another.
             stamina -= whiffDrain;
             UpdateBars();
+
+            // A close dodge: the swing would have landed, but the pupcat was rolling. Slow motion.
+            if (PlayerInZone() && player.IsInvincible)
+            {
+                GameFeel.SlowMo(0.45f, 0.3f);
+            }
             string why = player.IsInvincible ? "pupcat was rolling" : "pupcat was outside the red box";
             Debug.Log(data.characterName + " whiffed (" + why + "). Stamina: " + Mathf.Max(stamina, 0f));
         }
@@ -336,7 +353,8 @@ public class Enemy : MonoBehaviour
     }
 
     // Called by the pupcat's attack. Drains the health bar.
-    public void TakeHit(float amount)
+    // power scales the shove, freeze and shake (1 = normal strike, 2 = heavy strike or combo finisher).
+    public void TakeHit(float amount, float power = 1f)
     {
         if (CurrentState == State.Defeated || CurrentState == State.Exhausted) return;
 
@@ -349,11 +367,21 @@ public class Enemy : MonoBehaviour
         sprite.color = Color.white;
         flashEndTime = Time.time + HitFlashTime;
         float away = transform.position.x >= player.transform.position.x ? 1f : -1f;
-        rb.linearVelocity = new Vector2(away * HitKnockSpeed, rb.linearVelocity.y);
-        knockEndTime = Time.time + HitKnockTime;
+        rb.linearVelocity = new Vector2(away * HitKnockSpeed * power, rb.linearVelocity.y);
+        knockEndTime = Time.time + HitKnockTime * Mathf.Max(1f, power);
         GameFeel.Play(GameFeel.Sound.Hit);
-        GameFeel.HitStop(health <= 0f ? 0.14f : 0.06f);
-        GameFeel.Shake(health <= 0f ? 0.18f : 0.08f, 0.12f);
+        GameFeel.HitStop(health <= 0f ? 0.14f : 0.06f * power);
+        GameFeel.Shake(health <= 0f ? 0.18f : 0.08f * power, 0.12f);
+
+        // A heavy strike or combo finisher knocks the enemy out of a wind-up, breaking its attack.
+        if (power >= 2f && health > 0f && CurrentState == State.Telegraph)
+        {
+            swingsLeft = 0;
+            swingZone.enabled = false;
+            sprite.color = data.bodyColor;
+            stateEndTime = knockEndTime + 0.3f;
+            CurrentState = State.Recover;
+        }
 
         if (health <= 0f) Defeat();
     }
@@ -361,11 +389,19 @@ public class Enemy : MonoBehaviour
     void Defeat()
     {
         GameFeel.Play(GameFeel.Sound.Defeat);
+
         flashEndTime = 0f;
         CurrentState = State.Defeated;
         swingZone.enabled = false;
         rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
         sprite.color = new Color(0.25f, 0.25f, 0.25f);
+
+        // The spirit flame comes out of the body and flies off, sideways and up, out of the screen.
+        if (data.leavesSpirit)
+        {
+            float side = (transform.position.x >= player.transform.position.x) ? 1f : -1f;
+            SpiritRise.Spawn(data.spiritFlamePrefab, transform.position + Vector3.up * 0.3f, side);
+        }
         Debug.Log(data.characterName + ": OUTCOME = defeated. Consequence: " + CurrentConsequence);
     }
 
@@ -415,12 +451,24 @@ public class Enemy : MonoBehaviour
         healthBar.localScale = new Vector3(BarWidth * h, BarHeight, 1f);
         staminaBar.localScale = new Vector3(BarWidth * s, BarHeight, 1f);
 
-        // The thin cyan bar fills as parries add up. Full = the haunt line. Past it, it turns red.
-        float limit = ParryLimit;
-        float p = Mathf.Clamp01(parryDamageTotal / Mathf.Max(limit, 0.01f));
+        // The thin bar shows the parry mark.
+        //  Rival: cyan, fills toward the haunt line (40%). Past it, it turns red (a full attack).
+        //  Possessed: any parry fills it orange at once (a mild haunt).
+        float limit = Mathf.Max(data.maxHealth * data.hauntLine, 0.01f);
+        float p;
+        Color barColor;
+        if (data.isPossessed)
+        {
+            p = (parryDamageTotal > 0f) ? 1f : 0f;
+            barColor = new Color(1f, 0.6f, 0.2f);
+        }
+        else
+        {
+            p = Mathf.Clamp01(parryDamageTotal / limit);
+            barColor = (parryDamageTotal > limit) ? new Color(1f, 0.3f, 0.3f) : new Color(0.3f, 0.9f, 1f);
+        }
         parryBar.localScale = new Vector3(BarWidth * p, BarHeight * 0.6f, 1f);
-        parryBar.GetComponent<SpriteRenderer>().color =
-            (parryDamageTotal > limit) ? new Color(1f, 0.3f, 0.3f) : new Color(0.3f, 0.9f, 1f);
+        parryBar.GetComponent<SpriteRenderer>().color = barColor;
     }
 
     // Builds a dark back strip and a colored fill strip above the enemy.

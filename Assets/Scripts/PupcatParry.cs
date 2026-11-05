@@ -34,8 +34,10 @@ public class PupcatParry : MonoBehaviour
             return;
         }
 
-        if (GameInput.ParryPressed && Time.time >= nextParryTime && !controller.IsDodging)
+        if (GameInput.ParryPressed && Time.time >= nextParryTime)
         {
+            // Parrying cancels a roll: you can roll in, then catch the next swing.
+            if (controller.IsDodging) controller.CancelDodge();
             parryEndTime = Time.time + parryWindow;
             nextParryTime = Time.time + cooldown;
             GameFeel.Play(GameFeel.Sound.Guard);
@@ -43,6 +45,13 @@ public class PupcatParry : MonoBehaviour
 
         // A cyan box around the pupcat shows the guard is up.
         shield.enabled = IsParrying;
+    }
+
+    // Called when you roll: the roll cancels the guard, and a new parry is allowed almost at once.
+    public void CancelGuard()
+    {
+        parryEndTime = 0f;
+        nextParryTime = Time.time + 0.1f;
     }
 
     SpriteRenderer MakeShield()

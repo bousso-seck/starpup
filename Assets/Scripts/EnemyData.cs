@@ -8,8 +8,8 @@ public class EnemyData : ScriptableObject
 {
     [Header("Identity")]
     public string characterName = "Test Classmate";
-    public bool isPossessed = false;    // tick for possessed classmates: every parry counts as an attack
-                                        // (leave off for rivals, who get the Haunt Line allowance)
+    public bool isPossessed = false;    // tick for possessed classmates: any parry counts as an attack (a mild haunt)
+                                        // (leave off for rivals, who respect parries up to the Haunt Line)
     public Color bodyColor = new Color(1f, 0.55f, 0.1f);
 
     [Header("Bars")]
@@ -48,4 +48,15 @@ public class EnemyData : ScriptableObject
     public float parryStunTime = 1.2f;  // how long a parried enemy is staggered
     public float parryDamage = 8f;      // health a parry takes off (parrying counts as attacking)
     public float hauntLine = 0.4f;      // rivals only: parry damage over this share of max health = a full haunt
+
+    [Header("Spirit")]
+    public bool leavesSpirit = true;          // a defeated enemy lets out a spirit flame that flies off the screen
+    public GameObject spiritFlamePrefab;      // optional: drag the Spirit Flame prefab here. Empty = a simple built-in flame.
+
+    [Header("Parry stagger (who gets pushed back)")]
+    public float parryPushEnemy = 4f;       // how hard the enemy is shoved back when parried
+    public float parryEnemyStagger = 0.25f; // how long that shove lasts
+    public float parryPushPupcat = 2f;      // how hard the pupcat is shoved back
+    public float parryPupcatStagger = 0.12f; // how long the pupcat staggers
+                                            // Tip: for a rival, make the pupcat push bigger than the enemy push.
 }

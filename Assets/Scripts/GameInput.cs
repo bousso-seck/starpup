@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 // Needs the "Input System" package installed (Window > Package Manager > Unity Registry).
 public static class GameInput
 {
-    // -1 = left, 0 = nothing, 1 = right. A/D, arrow keys, or the left stick.
+    // -1 = left, 0 = nothing, 1 = right. A/D, arrow keys, the left stick, or the d-pad.
     public static float Move
     {
         get
@@ -26,13 +26,15 @@ public static class GameInput
             {
                 float stick = pad.leftStick.x.ReadValue();
                 if (Mathf.Abs(stick) > 0.2f) x += stick; // small dead zone so a resting stick does nothing
+                if (pad.dpad.left.isPressed) x -= 1f;
+                if (pad.dpad.right.isPressed) x += 1f;
             }
 
             return Mathf.Clamp(x, -1f, 1f);
         }
     }
 
-    // Space, or the A button (bottom button) on a controller.
+    // Space, or Cross (X, the bottom button) on a PS4 controller, or d-pad up.
     public static bool JumpPressed
     {
         get
@@ -40,11 +42,11 @@ public static class GameInput
             Keyboard kb = Keyboard.current;
             Gamepad pad = Gamepad.current;
             return (kb != null && kb.spaceKey.wasPressedThisFrame)
-                || (pad != null && pad.buttonSouth.wasPressedThisFrame);
+                || (pad != null && (pad.buttonSouth.wasPressedThisFrame || pad.dpad.up.wasPressedThisFrame));
         }
     }
 
-    // Left Shift, or the B button (right button).
+    // Left Shift, or Circle (the right button) on a PS4 controller.
     public static bool DodgePressed
     {
         get
@@ -56,7 +58,7 @@ public static class GameInput
         }
     }
 
-    // Left mouse click, or the Y button (top button) on a controller.
+    // Left mouse click, or Square (the left button) on a PS4 controller.
     public static bool AttackPressed
     {
         get
@@ -64,11 +66,36 @@ public static class GameInput
             Mouse mouse = Mouse.current;
             Gamepad pad = Gamepad.current;
             return (mouse != null && mouse.leftButton.wasPressedThisFrame)
-                || (pad != null && pad.buttonNorth.wasPressedThisFrame);
+                || (pad != null && pad.buttonWest.wasPressedThisFrame);
         }
     }
 
-    // Right mouse click, or the X button (left button) on a controller.
+    // True for as long as the attack button is held down (used for the charged heavy strike).
+    public static bool AttackHeld
+    {
+        get
+        {
+            Mouse mouse = Mouse.current;
+            Gamepad pad = Gamepad.current;
+            return (mouse != null && mouse.leftButton.isPressed)
+                || (pad != null && pad.buttonWest.isPressed);
+        }
+    }
+
+    // Hold C, S or the down arrow, or push the left stick / d-pad down, to crouch.
+    // (Left Ctrl is avoided on purpose: on a Mac, Ctrl + click counts as a right click.)
+    public static bool CrouchHeld
+    {
+        get
+        {
+            Keyboard kb = Keyboard.current;
+            Gamepad pad = Gamepad.current;
+            return (kb != null && (kb.cKey.isPressed || kb.sKey.isPressed || kb.downArrowKey.isPressed))
+                || (pad != null && (pad.leftStick.y.ReadValue() < -0.6f || pad.dpad.down.isPressed));
+        }
+    }
+
+    // Right mouse click, or Triangle (the top button) on a PS4 controller.
     public static bool ParryPressed
     {
         get
@@ -76,7 +103,7 @@ public static class GameInput
             Mouse mouse = Mouse.current;
             Gamepad pad = Gamepad.current;
             return (mouse != null && mouse.rightButton.wasPressedThisFrame)
-                || (pad != null && pad.buttonWest.wasPressedThisFrame);
+                || (pad != null && pad.buttonNorth.wasPressedThisFrame);
         }
     }
 
