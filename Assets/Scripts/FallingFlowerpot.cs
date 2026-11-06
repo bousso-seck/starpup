@@ -58,7 +58,7 @@ public class FallingFlowerpot : MonoBehaviour
 
         pot = MakeBox("Pot", 8, new Color(0.8f, 0.4f, 0.2f));
         pot.transform.localScale = new Vector3(potSize.x, potSize.y, 1f);
-        pot.enabled = false;
+        pot.gameObject.SetActive(false); // switches off the pot AND its green plant
 
         // A little green plant on top, so it reads as a flowerpot.
         GameObject plant = new GameObject("Plant");
@@ -114,8 +114,17 @@ public class FallingFlowerpot : MonoBehaviour
     {
         phase = Phase.Warning;
         phaseEnd = Time.time + warningTime;
+
+        // Put the pot up high and the shadow on the ground BEFORE showing them. Otherwise they are drawn
+        // for one frame wherever they were left (the pot at the bottom), then jump to the right place.
+        float x = transform.position.x;
+        pot.transform.position = new Vector3(x, transform.position.y + dropHeight, 0f);
+        shadow.transform.position = new Vector3(x, transform.position.y - potSize.y / 2f + 0.05f, 0f);
+        shadow.transform.localScale = new Vector3(potSize.x * 1.4f * 0.3f, 0.18f, 1f);
+        shadow.color = new Color(0f, 0f, 0f, 0.2f);
+
         shadow.enabled = true;
-        pot.enabled = true;
+        pot.gameObject.SetActive(true);
         GameFeel.Play(GameFeel.Sound.PotWarning); // a sound to say a pot is about to fall
     }
 
@@ -129,7 +138,7 @@ public class FallingFlowerpot : MonoBehaviour
 
     void Land()
     {
-        pot.enabled = false;
+        pot.gameObject.SetActive(false); // switches off the pot AND its green plant
         shadow.enabled = false;
 
         // Smash: dust, a thud and a small camera bump.

@@ -29,12 +29,6 @@ public class CameraFollow : MonoBehaviour
     {
         if (target == null) return;
 
-        if (!started)
-        {
-            basePosition = transform.position;
-            started = true;
-        }
-
         Vector3 goal = target.position + offset;
 
         if (useLimits)
@@ -45,6 +39,16 @@ public class CameraFollow : MonoBehaviour
             float hi = Mathf.Max(lo, maxX - half);
             goal.x = Mathf.Clamp(goal.x, lo, hi);
         }
+
+        // On the very first frame the camera jumps straight to where it belongs (no gliding in from wherever
+        // it was left in the editor). After that it follows smoothly.
+        if (!started)
+        {
+            basePosition = goal;
+            velocity = Vector3.zero;
+            started = true;
+        }
+
         basePosition = Vector3.SmoothDamp(basePosition, goal, ref velocity, smoothTime);
         transform.position = basePosition + GameFeel.ShakeOffset;
     }

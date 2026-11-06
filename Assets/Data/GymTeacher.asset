@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e21655684c330102a8c0d4f30558e81f, type: 3}
+  m_Name: GymTeacher
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  characterName: Test Classmate
+  isPossessed: 0
+  bodyColor: {r: 1, g: 0.4117647, b: 0.7058824, a: 1}
+  maxHealth: 250
+  maxStamina: 100
+  dodgeRatio: 2
+  noticeRange: 7
+  moveSpeed: 3.5
+  recoverChase: 0.5
+  attackRange: 2.4
+  hitRange: 2.8
+  hitHeight: 1.3
+  attackDamage: 2
+  telegraphTime: 0.4
+  recoverTime: 0.7
+  exhaustedTime: 3
+  swingsPerAttack: 2
+  comboTelegraphTime: 0.2
+  comboGap: 0.15
+  canBeParried: 1
+  parryStunTime: 1.2
+  parryDamage: 8
+  hauntLine: 0.67
+  strikeAllowance: 0.33
+  recordsGrudge: 1
+  leavesSpirit: 1
+  spiritFlamePrefab: {fileID: 8432909782336463786, guid: 8e88b6dc5bc8f490288d92dd23f260a6, type: 3}
+  parryPushEnemy: 2.5
+  parryEnemyStagger: 0.25
+  parryPushPupcat: 5
+  parryPupcatStagger: 0.12

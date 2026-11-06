@@ -32,6 +32,7 @@ public class PupcatController : MonoBehaviour
     private float dodgeEndTime;
     private float nextDodgeTime;
     private float knockbackEndTime;
+    private bool lockIsLightShove;   // true when the steering lock came from a strike lunge or parry stagger (not from getting hurt)
     private Collider2D body;
     private PupcatParry parry;
     private Vector3 standingScale;
@@ -60,6 +61,9 @@ public class PupcatController : MonoBehaviour
         else if (horizontal < 0f) FacingDirection = -1;
 
         // While being knocked back, let the shove play out. Steering is locked for a moment.
+        // A light shove (strike lunge, parry stagger) never traps you: roll or jump and you are free at once.
+        // Getting hurt still locks steering for its short moment.
+        if (Time.time < knockbackEndTime && lockIsLightShove && (GameInput.DodgePressed || GameInput.JumpPressed)) knockbackEndTime = 0f;
         if (Time.time < knockbackEndTime) return;
 
         // While rolling, the roll takes over. Steering and jumping are locked.
@@ -174,6 +178,7 @@ public class PupcatController : MonoBehaviour
         if (IsDodging) CancelDodge();
         if (IsCrouching) SetCrouch(false);
         knockbackEndTime = Time.time + duration;
+        lockIsLightShove = false;
         rb.linearVelocity = velocity;
     }
 
@@ -182,6 +187,7 @@ public class PupcatController : MonoBehaviour
     public void Shove(float xVelocity, float duration)
     {
         knockbackEndTime = Time.time + duration;
+        lockIsLightShove = true;
         rb.linearVelocity = new Vector2(xVelocity, rb.linearVelocity.y);
     }
 

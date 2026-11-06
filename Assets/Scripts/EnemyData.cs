@@ -49,6 +49,15 @@ public class EnemyData : ScriptableObject
     public float parryDamage = 8f;      // health a parry takes off (parrying counts as attacking)
     public float hauntLine = 0.4f;      // rivals only: parry damage over this share of max health = a full haunt
 
+    [Header("Strike allowance")]
+    public float strikeAllowance = 0f;  // share of max health the pupcat may take off by STRIKES without a grudge.
+                                        // 0 = any strike is a full haunt. Boss: 0.33 (one third).
+                                        // For the boss also set Haunt Line to 0.67, so strikes (1/3) + parries (2/3) = a clean win.
+
+    [Header("Grudge")]
+    public bool recordsGrudge = true;         // when this enemy is beaten, add to the hidden grudge tally.
+                                              // Leave it ON for the Level 1 boss too: his result carries on to the final boss.
+
     [Header("Spirit")]
     public bool leavesSpirit = true;          // a defeated enemy lets out a spirit flame that flies off the screen
     public GameObject spiritFlamePrefab;      // optional: drag the Spirit Flame prefab here. Empty = a simple built-in flame.
@@ -58,5 +67,5 @@ public class EnemyData : ScriptableObject
     public float parryEnemyStagger = 0.25f; // how long that shove lasts
     public float parryPushPupcat = 2f;      // how hard the pupcat is shoved back
     public float parryPupcatStagger = 0.12f; // how long the pupcat staggers
-                                             // Tip: for a rival, make the pupcat push bigger than the enemy push.
+                                            // Tip: for a rival, make the pupcat push bigger than the enemy push.
 }

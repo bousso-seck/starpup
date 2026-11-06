@@ -39,6 +39,7 @@ public class LevelGoal : MonoBehaviour
             bell.enabled = false;
         }
 
+        Grudge.Bank(); // keep this level's grudge for the later bosses
         GameFeel.Play(GameFeel.Sound.Parry); // a bright ping
         Debug.Log(levelName + " complete. Time left: " + Mathf.CeilToInt(timeLeft) + "s");
         Invoke(nameof(Finish), restartDelay);

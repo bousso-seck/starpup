@@ -11,6 +11,13 @@ public class Enemy : MonoBehaviour
     public enum State { Approach, Telegraph, Recover, Stunned, Exhausted, Defeated }
     public State CurrentState { get; private set; }
 
+    // For boss scripts (like GymTeacherBoss) that take the enemy over for their own special attacks.
+    public bool brainPaused;                         // true = this script stands still and the boss script drives
+    public event System.Action<float, float> Hit;    // fired when a strike lands: (damage, power)
+    public bool IsAwake { get { return noticed; } }
+    public float HealthFraction { get { return (data != null && data.maxHealth > 0f) ? Mathf.Clamp01(health / data.maxHealth) : 0f; } }
+    public void Wake() { noticed = true; }           // wakes the enemy up from anywhere (a boss arena does this)
+
     private float health;
     private float stamina;
     private Rigidbody2D rb;
@@ -40,14 +47,18 @@ public class Enemy : MonoBehaviour
     //  Anyone:    a direct strike, or defeating them, is a full haunt.
     public enum Consequence { None, Respect, MildHaunt, FullHaunt }
     private float parryDamageTotal;    // health taken off by parries so far
-    private bool struckDirectly;       // true once a real strike has landed
+    private bool struckDirectly;       // true once a real strike has landed (past the strike allowance)
+    private float strikeDamageTotal;   // health taken off by direct strikes so far
     private Transform parryBar;        // shows how close the parry total is to the haunt line
 
     public Consequence CurrentConsequence
     {
         get
         {
-            if (struckDirectly || CurrentState == State.Defeated) return Consequence.FullHaunt;
+            // With a strike allowance (the boss: 1/3), a few strikes are forgiven. Without one, any strike
+            // or defeating them is a full haunt.
+            if (struckDirectly) return Consequence.FullHaunt;
+            if (CurrentState == State.Defeated && data.strikeAllowance <= 0f) return Consequence.FullHaunt;
 
             if (data.isPossessed)
             {
@@ -149,6 +160,9 @@ public class Enemy : MonoBehaviour
             sprite.color = StateColor();
         }
 
+        // A boss script can take over (or hold the enemy back until a fight starts). Nothing below runs while it does.
+        if (brainPaused) return;
+
         // While being shoved by a strike, the enemy can't act. Hits briefly interrupt it.
         if (Time.time < knockEndTime) return;
 
@@ -220,6 +234,7 @@ public class Enemy : MonoBehaviour
                 if (Time.time >= stateEndTime)
                 {
                     Debug.Log(data.characterName + ": OUTCOME = retreated (exhausted). Parries landed: " + parries + ". Consequence: " + CurrentConsequence);
+                    if (data.recordsGrudge) Grudge.Record(CurrentConsequence);
                     gameObject.SetActive(false);
                 }
                 break;
@@ -353,6 +368,51 @@ public class Enemy : MonoBehaviour
         }
     }
 
+    // For boss scripts: the pupcat parried one of the boss's own special attacks.
+    // It counts like any other parry (stamina, health, the hidden parry total, the pupcat's shove).
+    // Returns true if that left the boss with no stamina, so it is now walking away exhausted.
+    public bool TakeParry(float attackDirection)
+    {
+        stamina -= whiffDrain;
+        health -= data.parryDamage;
+        parryDamageTotal += data.parryDamage;
+        parries++;
+        UpdateBars();
+        GameFeel.HitStop(0.1f);
+        GameFeel.Shake(0.1f, 0.15f);
+        GameFeel.Play(GameFeel.Sound.Parry);
+
+        float awayFromEnemy = (player.transform.position.x >= transform.position.x) ? 1f : -1f;
+        player.Shove(awayFromEnemy * data.parryPushPupcat, data.parryPupcatStagger);
+
+        if (health <= 0f)
+        {
+            Defeat();
+            return false;
+        }
+        return TryExhaust(attackDirection);
+    }
+
+    // For boss scripts: one of the boss's special attacks missed. Drains stamina like a missed swing.
+    // Returns true if that left the boss with no stamina.
+    public bool TakeWhiff(float attackDirection)
+    {
+        stamina -= whiffDrain;
+        UpdateBars();
+        return TryExhaust(attackDirection);
+    }
+
+    bool TryExhaust(float attackDirection)
+    {
+        if (stamina > 0.01f) return false;
+        retreatDir = -attackDirection;
+        stateEndTime = Time.time + data.exhaustedTime;
+        sprite.color = new Color(0.6f, 0.6f, 0.6f); // grey = embarrassed
+        CurrentState = State.Exhausted;
+        brainPaused = false;
+        return true;
+    }
+
     // Called by the pupcat's attack. Drains the health bar.
     // power scales the shove, freeze and shake (1 = normal strike, 2 = heavy strike or combo finisher).
     public void TakeHit(float amount, float power = 1f, GameFeel.Sound hitSound = GameFeel.Sound.Hit)
@@ -361,7 +421,9 @@ public class Enemy : MonoBehaviour
 
         health -= amount;
         noticed = true;        // getting hit wakes it up
-        struckDirectly = true; // a direct strike is a full attack
+        strikeDamageTotal += amount;
+        // A direct strike is a full attack, unless this enemy has a strike allowance and we are still inside it.
+        if (data.strikeAllowance <= 0f || strikeDamageTotal > data.maxHealth * data.strikeAllowance) struckDirectly = true;
         UpdateBars();
 
         // Make the hit feel solid: white flash, a small shove away, a tiny freeze, a camera bump.
@@ -373,6 +435,7 @@ public class Enemy : MonoBehaviour
         GameFeel.Play(hitSound); // each kind of strike brings its own hit sound
         GameFeel.HitStop(health <= 0f ? 0.14f : 0.06f * power);
         GameFeel.Shake(health <= 0f ? 0.18f : 0.08f * power, 0.12f);
+        if (Hit != null) Hit(amount, power);
 
         // A heavy strike or combo finisher knocks the enemy out of a wind-up, breaking its attack.
         if (power >= 2f && health > 0f && CurrentState == State.Telegraph)
@@ -396,6 +459,7 @@ public class Enemy : MonoBehaviour
         swingZone.enabled = false;
         rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
         sprite.color = new Color(0.25f, 0.25f, 0.25f);
+        if (data.recordsGrudge) Grudge.Record(CurrentConsequence); // adds to the hidden grudge the boss will carry
 
         // The spirit flame comes out of the body and flies off, sideways and up, out of the screen.
         if (data.leavesSpirit)

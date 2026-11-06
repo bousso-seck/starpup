@@ -230,6 +230,9 @@ public class PupcatAttack : MonoBehaviour
             if (e != null && e.CurrentState != Enemy.State.Defeated && e.CurrentState != Enemy.State.Exhausted) connected = true;
         }
 
+        // Cyan projectiles are knocked back at the thrower by any strike.
+        if (Projectile.TryStrike(center, new Vector2(strikeReach, height), hitSound)) connected = true;
+
         // One sound for hitting air. When the strike lands, the enemy plays the hit sound instead.
         if (!connected) GameFeel.Play(missSound);
 
