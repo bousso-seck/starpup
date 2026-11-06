@@ -21,9 +21,9 @@ MonoBehaviour:
   noticeRange: 7
   moveSpeed: 3.5
   recoverChase: 0.5
-  attackRange: 2.4
-  hitRange: 2.8
-  hitHeight: 1.3
+  attackRange: 2.25
+  hitRange: 2.45
+  hitHeight: 1
   attackDamage: 2
   telegraphTime: 0.4
   recoverTime: 0.7

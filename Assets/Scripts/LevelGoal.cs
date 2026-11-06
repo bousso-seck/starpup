@@ -11,7 +11,8 @@ public class LevelGoal : MonoBehaviour
 {
     public string levelName = "Level 1";
     public Vector2 zoneSize = new Vector2(2f, 10f); // the size of the finish zone
-    public float restartDelay = 5f;                 // seconds before the level restarts
+    public float restartDelay = 5f;                 // seconds before leaving the level
+    public string nextScene = "LevelSelect";        // where to go when the level is done (empty = restart the level)
 
     private bool reached;
     private float timeLeft;
@@ -47,8 +48,9 @@ public class LevelGoal : MonoBehaviour
 
     void Finish()
     {
-        // Placeholder: restart. Later: go to the next level or the level select screen.
-        DevTools.Restart();
+        // Back to the level select screen. (Leave Next Scene empty to restart the level instead.)
+        if (!string.IsNullOrEmpty(nextScene)) UnityEngine.SceneManagement.SceneManager.LoadScene(nextScene);
+        else DevTools.Restart();
     }
 
     void OnGUI()
