@@ -1808,7 +1808,7 @@ Transform:
   m_GameObject: {fileID: 1156610634}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 17.3, y: -9.36174, z: 0}
+  m_LocalPosition: {x: 12.07, y: -9.36174, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1827,7 +1827,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FallingFlowerpot
   potSize: {x: 0.8, y: 0.8}
-  dropHeight: 7
+  dropHeight: 4
   triggerRange: 4
   warningTime: 0.9
   fallGravity: 35
@@ -2079,7 +2079,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FallingFlowerpot
   potSize: {x: 0.8, y: 0.8}
-  dropHeight: 7
+  dropHeight: 5
   triggerRange: 4
   warningTime: 0.9
   fallGravity: 35
@@ -2094,7 +2094,7 @@ Transform:
   m_GameObject: {fileID: 1766425757}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -13, y: -9.36174, z: 0}
+  m_LocalPosition: {x: -16.98, y: -9.36174, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

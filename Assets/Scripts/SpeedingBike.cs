@@ -109,7 +109,7 @@ public class SpeedingBike : MonoBehaviour
         phase = Phase.Warning;
         phaseEnd = Time.time + warningTime;
         warning.enabled = true;
-        GameFeel.Play(GameFeel.Sound.Guard); // a tick to say the lane is live
+        GameFeel.Play(GameFeel.Sound.BikeBell); // the bike announces itself: the lane is live
     }
 
     void StartRide()
@@ -120,7 +120,7 @@ public class SpeedingBike : MonoBehaviour
         warning.enabled = false;
         bike.transform.position = transform.position;
         bike.enabled = true;
-        GameFeel.Play(GameFeel.Sound.Roll); // whoosh as it takes off
+        GameFeel.Play(GameFeel.Sound.BikeRide); // whoosh as it takes off
     }
 
     void EndRide()

@@ -116,7 +116,7 @@ public class FallingFlowerpot : MonoBehaviour
         phaseEnd = Time.time + warningTime;
         shadow.enabled = true;
         pot.enabled = true;
-        GameFeel.Play(GameFeel.Sound.Guard); // a tick to say a pot is about to fall
+        GameFeel.Play(GameFeel.Sound.PotWarning); // a sound to say a pot is about to fall
     }
 
     void StartFall()
@@ -135,7 +135,7 @@ public class FallingFlowerpot : MonoBehaviour
         // Smash: dust, a thud and a small camera bump.
         Vector3 ground = new Vector3(transform.position.x, transform.position.y - potSize.y / 2f, 0f);
         GameFeel.Dust(ground, 7, 0f);
-        GameFeel.Play(GameFeel.Sound.Land);
+        GameFeel.Play(GameFeel.Sound.PotSmash);
         GameFeel.Shake(0.08f, 0.12f);
 
         if (repeatDelay > 0f)

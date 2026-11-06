@@ -52,6 +52,7 @@ public class PupcatAttack : MonoBehaviour
     private bool holding;
     private float holdStart;
     private bool chargeReady;
+    private bool chargeSoundPlayed;   // the "loading" sound has started for this hold
     private bool queued;
     private float queuedHeld;
     private float queuedUntil;
@@ -75,6 +76,7 @@ public class PupcatAttack : MonoBehaviour
     {
         holding = false;
         queued = false;
+        GameFeel.StopHeld();
         if (glow != null) glow.enabled = false;
         if (slash != null) slash.enabled = false;
     }
@@ -88,6 +90,7 @@ public class PupcatAttack : MonoBehaviour
         {
             holding = false;
             glow.enabled = false;
+            GameFeel.StopHeld();
         }
 
         if (GameInput.AttackPressed)
@@ -95,6 +98,7 @@ public class PupcatAttack : MonoBehaviour
             holding = true;
             holdStart = Time.time;
             chargeReady = false;
+            chargeSoundPlayed = false;
         }
 
         if (holding)
@@ -108,6 +112,7 @@ public class PupcatAttack : MonoBehaviour
             {
                 holding = false;
                 glow.enabled = false;
+                GameFeel.StopHeld(); // the loading sound ends the moment the button is let go
                 Request(held);
             }
         }
@@ -159,11 +164,17 @@ public class PupcatAttack : MonoBehaviour
         int i = Mathf.Clamp(comboIndex, 0, last);
         bool finisher = (i == last) && last > 0;
 
+        // Each hit of the combo has its own pair of sounds: one for hitting air, one for hitting an enemy.
+        GameFeel.Sound miss, hit;
+        if (finisher) { miss = GameFeel.Sound.FinisherMiss; hit = GameFeel.Sound.FinisherHit; }
+        else if (i == 0) { miss = GameFeel.Sound.Combo1Miss; hit = GameFeel.Sound.Combo1Hit; }
+        else { miss = GameFeel.Sound.Combo2Miss; hit = GameFeel.Sound.Combo2Hit; }
+
         controller.Shove(controller.FacingDirection * (finisher ? 3f : 1.5f), 0.08f); // a little step forward
         Strike(comboMultipliers[i], reach, 1.2f, 0f,
                finisher ? finisherRecovery : hitGap,
                finisher ? 2f : 1f,
-               finisher ? GameFeel.Sound.Finisher : GameFeel.Sound.Swing,
+               miss, hit,
                finisher ? new Color(1f, 0.75f, 0.3f, 0.7f) : new Color(1f, 1f, 1f, 0.55f));
 
         comboIndex = finisher ? 0 : i + 1;
@@ -174,20 +185,20 @@ public class PupcatAttack : MonoBehaviour
     {
         controller.Shove(controller.FacingDirection * 4f, 0.12f);
         Strike(heavyMultiplier, heavyReach, 1.4f, 0f, heavyRecovery, 2f,
-               GameFeel.Sound.Heavy, new Color(1f, 0.75f, 0.3f, 0.7f));
+               GameFeel.Sound.HeavyMiss, GameFeel.Sound.HeavyHit, new Color(1f, 0.75f, 0.3f, 0.7f));
         comboIndex = 0;
     }
 
     void LowStrike()
     {
         Strike(lowMultiplier, reach, 0.8f, -0.1f, lowRecovery, 1f,
-               GameFeel.Sound.Swing, new Color(0.7f, 0.9f, 1f, 0.55f));
+               GameFeel.Sound.CrouchMiss, GameFeel.Sound.CrouchHit, new Color(0.7f, 0.9f, 1f, 0.55f));
     }
 
     void AirStrike()
     {
         Strike(airMultiplier, reach, 1.6f, -0.2f, airRecovery, 1f,
-               GameFeel.Sound.Swing, new Color(1f, 1f, 1f, 0.55f));
+               GameFeel.Sound.AirMiss, GameFeel.Sound.AirHit, new Color(1f, 1f, 1f, 0.55f));
     }
 
     void DashStrike()
@@ -195,13 +206,13 @@ public class PupcatAttack : MonoBehaviour
         controller.CancelDodge();
         controller.Shove(controller.FacingDirection * dashLunge, 0.12f);
         Strike(dashMultiplier, dashReach, 1.2f, 0f, dashRecovery, 1.3f,
-               GameFeel.Sound.Swing, new Color(1f, 1f, 1f, 0.7f));
+               GameFeel.Sound.DashStrikeMiss, GameFeel.Sound.DashStrikeHit, new Color(1f, 1f, 1f, 0.7f));
     }
 
     // One strike: a box in front of the pupcat. Every enemy inside it takes the hit.
     // power scales the shove, the freeze and the shake that the hit causes (1 = normal).
     void Strike(float multiplier, float strikeReach, float height, float yOffset,
-                float recovery, float power, GameFeel.Sound sound, Color flash)
+                float recovery, float power, GameFeel.Sound missSound, GameFeel.Sound hitSound, Color flash)
     {
         nextAttackTime = Time.time + recovery;
 
@@ -210,13 +221,23 @@ public class PupcatAttack : MonoBehaviour
         Collider2D[] found = Physics2D.OverlapBoxAll(center, new Vector2(strikeReach, height), 0f);
 
         ShowSlash(center, new Vector2(strikeReach, height), flash);
-        GameFeel.Play(sound);
+
+        // Does the strike actually reach an enemy that can still be hit?
+        bool connected = false;
+        foreach (Collider2D c in found)
+        {
+            Enemy e = c.GetComponent<Enemy>();
+            if (e != null && e.CurrentState != Enemy.State.Defeated && e.CurrentState != Enemy.State.Exhausted) connected = true;
+        }
+
+        // One sound for hitting air. When the strike lands, the enemy plays the hit sound instead.
+        if (!connected) GameFeel.Play(missSound);
 
         float amount = damage * multiplier;
         foreach (Collider2D c in found)
         {
             Enemy enemy = c.GetComponent<Enemy>();
-            if (enemy != null) enemy.TakeHit(amount, power);
+            if (enemy != null) enemy.TakeHit(amount, power, hitSound);
         }
     }
 
@@ -226,6 +247,14 @@ public class PupcatAttack : MonoBehaviour
         if (held < 0.12f) return;
 
         glow.enabled = true;
+
+        // The "loading" sound starts once the button has been held a moment (a quick tap never makes it).
+        if (!chargeSoundPlayed)
+        {
+            chargeSoundPlayed = true;
+            GameFeel.PlayHeld(GameFeel.Sound.HeavyCharge);
+        }
+
         float k = Mathf.Clamp01(held / chargeTime);
         float alpha = Mathf.Lerp(0.1f, 0.4f, k);
 

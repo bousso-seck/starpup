@@ -58,5 +58,5 @@ public class EnemyData : ScriptableObject
     public float parryEnemyStagger = 0.25f; // how long that shove lasts
     public float parryPushPupcat = 2f;      // how hard the pupcat is shoved back
     public float parryPupcatStagger = 0.12f; // how long the pupcat staggers
-                                            // Tip: for a rival, make the pupcat push bigger than the enemy push.
+                                             // Tip: for a rival, make the pupcat push bigger than the enemy push.
 }

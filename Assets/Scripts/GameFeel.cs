@@ -23,7 +23,14 @@ public class GameFeel : MonoBehaviour
     // The camera adds this to its position every frame (see CameraFollow).
     public static Vector3 ShakeOffset { get; private set; }
 
-    public enum Sound { Swing, Hit, Parry, Guard, Hurt, Jump, Land, Roll, Defeat, Heavy, Finisher, Dash }
+    public enum Sound
+    {
+        Swing, Hit, Parry, Guard, Hurt, Jump, Land, Roll, Defeat, Heavy, Dash, BikeBell, BikeRide, HeavyCharge, HeavyHit, HeavyMiss,
+        Combo1Miss, Combo1Hit, Combo2Miss, Combo2Hit, FinisherMiss, FinisherHit,
+        CrouchMiss, CrouchHit, AirMiss, AirHit, DashStrikeMiss, DashStrikeHit,
+        PotWarning, PotSmash,
+        EnemyWindup, EnemySwing, EnemyDefeat
+    }
 
     private const float MasterVolume = 0.7f; // turn all the placeholder sounds up or down here
 
@@ -37,6 +44,8 @@ public class GameFeel : MonoBehaviour
     private bool slowActive;
 
     private AudioSource audioSource;
+    private AudioSource heldSource;   // plays a sound that can be stopped early
+    private Coroutine heldFade;
     private AudioClip[] clips;
     private AudioClip[][] variants; // every sound can have several versions; one is picked at random
     private Sprite dustSprite;
@@ -55,21 +64,51 @@ public class GameFeel : MonoBehaviour
         audioSource = gameObject.AddComponent<AudioSource>();
         audioSource.playOnAwake = false;
 
+        // A second speaker for a sound that can be cut off again (the heavy strike's loading sound).
+        heldSource = gameObject.AddComponent<AudioSource>();
+        heldSource.playOnAwake = false;
+
         // MakeClip(length, start pitch, end pitch, how noisy 0-1, how fast it fades, volume)
         clips = new AudioClip[System.Enum.GetValues(typeof(Sound)).Length];
-        clips[(int)Sound.Swing]  = MakeClip(0.10f, 300f, 120f, 0.9f, 25f, 0.35f);  // whoosh
-        clips[(int)Sound.Hit]    = MakeClip(0.15f, 160f, 60f, 0.5f, 20f, 0.7f);    // thump
-        clips[(int)Sound.Parry]  = MakeClip(0.25f, 900f, 1400f, 0.05f, 12f, 0.45f); // bright ping
-        clips[(int)Sound.Guard]  = MakeClip(0.06f, 600f, 700f, 0f, 40f, 0.2f);      // tiny tick
-        clips[(int)Sound.Hurt]   = MakeClip(0.25f, 220f, 90f, 0.3f, 10f, 0.7f);    // ouch
-        clips[(int)Sound.Jump]   = MakeClip(0.12f, 250f, 500f, 0.05f, 14f, 0.3f);   // hop
-        clips[(int)Sound.Land]   = MakeClip(0.10f, 90f, 50f, 0.4f, 28f, 0.45f);     // soft thud
-        clips[(int)Sound.Roll]   = MakeClip(0.20f, 200f, 200f, 0.95f, 9f, 0.3f);    // scuff
+        clips[(int)Sound.Swing] = MakeClip(0.10f, 300f, 120f, 0.9f, 25f, 0.35f);  // whoosh
+        clips[(int)Sound.Hit] = MakeClip(0.15f, 160f, 60f, 0.5f, 20f, 0.7f);    // thump
+        clips[(int)Sound.Parry] = MakeClip(0.25f, 900f, 1400f, 0.05f, 12f, 0.45f); // bright ping
+        clips[(int)Sound.Guard] = MakeClip(0.06f, 600f, 700f, 0f, 40f, 0.2f);      // tiny tick
+        clips[(int)Sound.Hurt] = MakeClip(0.25f, 220f, 90f, 0.3f, 10f, 0.7f);    // ouch
+        clips[(int)Sound.Jump] = MakeClip(0.12f, 250f, 500f, 0.05f, 14f, 0.3f);   // hop
+        clips[(int)Sound.Land] = MakeClip(0.10f, 90f, 50f, 0.4f, 28f, 0.45f);     // soft thud
+        clips[(int)Sound.Roll] = MakeClip(0.20f, 200f, 200f, 0.95f, 9f, 0.3f);    // scuff
         clips[(int)Sound.Defeat] = MakeClip(0.40f, 200f, 40f, 0.4f, 6f, 0.7f);     // sinking
-        clips[(int)Sound.Heavy]    = MakeClip(0.22f, 220f, 70f, 0.7f, 12f, 0.5f);   // big whoosh
-        clips[(int)Sound.Finisher] = MakeClip(0.28f, 400f, 90f, 0.6f, 10f, 0.55f);  // sharp swoosh
+        clips[(int)Sound.Heavy] = MakeClip(0.22f, 220f, 70f, 0.7f, 12f, 0.5f);   // big whoosh
+        // Every attack has one sound for hitting air (Miss) and one for hitting an enemy (Hit).
+        clips[(int)Sound.Combo1Miss] = MakeClip(0.10f, 320f, 130f, 0.9f, 25f, 0.35f);   // light whoosh
+        clips[(int)Sound.Combo1Hit] = MakeClip(0.15f, 170f, 65f, 0.5f, 20f, 0.6f);     // thump
+        clips[(int)Sound.Combo2Miss] = MakeClip(0.10f, 280f, 110f, 0.9f, 25f, 0.38f);   // a slightly lower whoosh
+        clips[(int)Sound.Combo2Hit] = MakeClip(0.15f, 150f, 55f, 0.5f, 20f, 0.65f);    // a slightly deeper thump
+        clips[(int)Sound.FinisherMiss] = MakeClip(0.28f, 400f, 90f, 0.6f, 10f, 0.55f);    // sharp swoosh
+        clips[(int)Sound.FinisherHit] = MakeClip(0.30f, 180f, 45f, 0.55f, 9f, 0.8f);     // big crack
+        clips[(int)Sound.CrouchMiss] = MakeClip(0.09f, 400f, 200f, 0.9f, 28f, 0.3f);    // quick low swish
+        clips[(int)Sound.CrouchHit] = MakeClip(0.12f, 220f, 90f, 0.5f, 24f, 0.5f);
+        clips[(int)Sound.AirMiss] = MakeClip(0.12f, 500f, 250f, 0.8f, 20f, 0.3f);    // airy whoosh
+        clips[(int)Sound.AirHit] = MakeClip(0.14f, 200f, 80f, 0.45f, 20f, 0.55f);
+        clips[(int)Sound.DashStrikeMiss] = MakeClip(0.16f, 700f, 220f, 0.9f, 14f, 0.35f); // fast whoosh
+        clips[(int)Sound.DashStrikeHit] = MakeClip(0.20f, 190f, 50f, 0.5f, 14f, 0.7f);
 
-        clips[(int)Sound.Dash]     = MakeClip(0.16f, 700f, 250f, 0.85f, 14f, 0.3f);  // airy whoosh
+        // The falling flowerpot.
+        clips[(int)Sound.PotWarning] = MakeClip(0.12f, 800f, 650f, 0.1f, 20f, 0.25f);  // a short "tink" as it starts to wobble
+        clips[(int)Sound.PotSmash] = MakeClip(0.30f, 500f, 120f, 0.95f, 9f, 0.6f);   // a crunchy crash
+
+        // Enemies.
+        clips[(int)Sound.EnemyWindup] = MakeClip(0.18f, 400f, 600f, 0.3f, 12f, 0.25f); // a short rising "hup" as they wind up
+        clips[(int)Sound.EnemySwing] = MakeClip(0.12f, 260f, 100f, 0.9f, 22f, 0.4f);  // the swing itself
+        clips[(int)Sound.EnemyDefeat] = MakeClip(0.35f, 300f, 80f, 0.4f, 7f, 0.6f);    // going down
+
+        clips[(int)Sound.Dash] = MakeClip(0.16f, 700f, 250f, 0.85f, 14f, 0.3f);  // airy whoosh
+        clips[(int)Sound.HeavyCharge] = MakeClip(0.6f, 100f, 500f, 0.3f, 2f, 0.3f);  // a rising hum while it loads
+        clips[(int)Sound.HeavyHit] = MakeClip(0.3f, 140f, 40f, 0.6f, 9f, 0.8f);     // a big thump
+        clips[(int)Sound.HeavyMiss] = MakeClip(0.25f, 250f, 80f, 0.9f, 10f, 0.4f);   // a heavy empty whoosh
+        clips[(int)Sound.BikeBell] = MakeClip(0.35f, 1500f, 1500f, 0f, 7f, 0.35f);   // a bike bell ring
+        clips[(int)Sound.BikeRide] = MakeClip(0.55f, 150f, 350f, 0.7f, 4f, 0.3f);    // a rising whoosh as it zips past
 
         // Real sound files in Assets/Resources/Sfx replace the placeholders above.
         // "Roll" is one file; "Roll1", "Roll2", ... are several versions to pick from at random.
@@ -126,6 +165,44 @@ public class GameFeel : MonoBehaviour
         if (instance == null || instance.audioSource == null) return;
         AudioClip[] options = instance.variants[(int)sound];
         instance.audioSource.PlayOneShot(options[Random.Range(0, options.Length)], MasterVolume);
+    }
+
+    // Starts a sound that can be cut off again with StopHeld (the heavy strike's loading sound).
+    public static void PlayHeld(Sound sound)
+    {
+        if (instance == null || instance.heldSource == null) return;
+        if (instance.heldFade != null)
+        {
+            instance.StopCoroutine(instance.heldFade);
+            instance.heldFade = null;
+        }
+        AudioClip[] options = instance.variants[(int)sound];
+        instance.heldSource.volume = MasterVolume;
+        instance.heldSource.clip = options[Random.Range(0, options.Length)];
+        instance.heldSource.Play();
+    }
+
+    // Cuts the held sound off straight away (a 0.04 second fade so it doesn't click).
+    public static void StopHeld()
+    {
+        if (instance == null || instance.heldSource == null || !instance.heldSource.isPlaying) return;
+        if (instance.heldFade != null) instance.StopCoroutine(instance.heldFade);
+        instance.heldFade = instance.StartCoroutine(instance.FadeHeld());
+    }
+
+    IEnumerator FadeHeld()
+    {
+        float start = instance.heldSource.volume;
+        float t = 0f;
+        while (t < 0.04f)
+        {
+            t += Time.unscaledDeltaTime;
+            heldSource.volume = Mathf.Max(0f, start * (1f - t / 0.04f));
+            yield return null;
+        }
+        heldSource.Stop();
+        heldSource.volume = MasterVolume;
+        heldFade = null;
     }
 
     // Freezes the whole game for a split second, so a hit feels heavy.

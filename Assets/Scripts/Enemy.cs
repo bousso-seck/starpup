@@ -252,6 +252,7 @@ public class Enemy : MonoBehaviour
         stateEndTime = Time.time + windUp;
         sprite.color = new Color(1f, 1f, 0.3f); // yellow = a swing is coming
         ShowZone(new Color(1f, 0.9f, 0.2f, 0.3f)); // faint yellow box = the danger zone
+        GameFeel.Play(GameFeel.Sound.EnemyWindup); // the wind-up before a swing
         CurrentState = State.Telegraph;
     }
 
@@ -267,7 +268,7 @@ public class Enemy : MonoBehaviour
 
         // Flash the danger zone red so the swing is visible.
         ShowZone(new Color(1f, 0.2f, 0.2f, 0.65f));
-        GameFeel.Play(GameFeel.Sound.Swing);
+        GameFeel.Play(GameFeel.Sound.EnemySwing);
         zoneHideTime = Time.time + 0.2f;
 
         if (parried)
@@ -354,7 +355,7 @@ public class Enemy : MonoBehaviour
 
     // Called by the pupcat's attack. Drains the health bar.
     // power scales the shove, freeze and shake (1 = normal strike, 2 = heavy strike or combo finisher).
-    public void TakeHit(float amount, float power = 1f)
+    public void TakeHit(float amount, float power = 1f, GameFeel.Sound hitSound = GameFeel.Sound.Hit)
     {
         if (CurrentState == State.Defeated || CurrentState == State.Exhausted) return;
 
@@ -369,7 +370,7 @@ public class Enemy : MonoBehaviour
         float away = transform.position.x >= player.transform.position.x ? 1f : -1f;
         rb.linearVelocity = new Vector2(away * HitKnockSpeed * power, rb.linearVelocity.y);
         knockEndTime = Time.time + HitKnockTime * Mathf.Max(1f, power);
-        GameFeel.Play(GameFeel.Sound.Hit);
+        GameFeel.Play(hitSound); // each kind of strike brings its own hit sound
         GameFeel.HitStop(health <= 0f ? 0.14f : 0.06f * power);
         GameFeel.Shake(health <= 0f ? 0.18f : 0.08f * power, 0.12f);
 
@@ -388,7 +389,7 @@ public class Enemy : MonoBehaviour
 
     void Defeat()
     {
-        GameFeel.Play(GameFeel.Sound.Defeat);
+        GameFeel.Play(GameFeel.Sound.EnemyDefeat);
 
         flashEndTime = 0f;
         CurrentState = State.Defeated;
@@ -400,7 +401,7 @@ public class Enemy : MonoBehaviour
         if (data.leavesSpirit)
         {
             float side = (transform.position.x >= player.transform.position.x) ? 1f : -1f;
-            SpiritRise.Spawn(data.spiritFlamePrefab, transform.position + Vector3.up * 0.3f, side);
+            SpiritRise.Spawn(data.spiritFlamePrefab, transform.position, side); // the middle of the body
         }
         Debug.Log(data.characterName + ": OUTCOME = defeated. Consequence: " + CurrentConsequence);
     }
