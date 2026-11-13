@@ -23,6 +23,13 @@ public class MenuManager : MonoBehaviour
         SceneManager.LoadScene("SampleScene");
     }
 
+    // Level Select: Level 2 -> Gameplay
+    public void PlayLevel2()
+    {
+        Grudge.NewGame();
+        SceneManager.LoadScene("Level2");
+    }
+
     // Level Select: Back -> Main Menu
     public void BackToMainMenu()
     {
