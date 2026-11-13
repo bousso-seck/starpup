@@ -294,7 +294,7 @@ Transform:
   m_GameObject: {fileID: 24872315}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 62.4, y: -7.33174, z: 0}
+  m_LocalPosition: {x: 33.2, y: -7.33174, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -733,7 +733,7 @@ Transform:
   m_GameObject: {fileID: 739880918}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -26.8, y: -7.33174, z: 0}
+  m_LocalPosition: {x: 6.5, y: -7.33174, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -950,7 +950,7 @@ Transform:
   m_GameObject: {fileID: 878756254}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 33.4, y: -7.33174, z: 0}
+  m_LocalPosition: {x: 62.5, y: -7.33174, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1078,7 +1078,7 @@ MonoBehaviour:
   frameColor: {r: 0.15, g: 0.7, b: 0.9, a: 1}
   riderColor: {r: 0.95, g: 0.75, b: 0.2, a: 1}
   triggerRange: 8
-  warningTime: 1
+  warningTime: 0.8
   speed: 18
   repeatDelay: 4
   damage: 1
@@ -1228,7 +1228,7 @@ Transform:
   m_GameObject: {fileID: 1078997250}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 4.2, y: -7.33174, z: 0}
+  m_LocalPosition: {x: -26.6, y: -7.33174, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2108,7 +2108,7 @@ MonoBehaviour:
   windupBonus: 0.25
   surgeAt: 0.5
   surgeExtra: 0.25
-  useTotalGrudge: 0
+  useTotalGrudge: 1
   totalGrudgeMax: 18
   testGrudge: 0
   firstRushDelay: 3
@@ -2131,7 +2131,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab638390189afabd5b1dbc140b3001e4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
-  data: {fileID: 11400000, guid: 2d70701cdf1c4dc2c879cdce7dbeada9, type: 2}
+  data: {fileID: 11400000, guid: 76c0545721d6daa57a00cb4cacc89a11, type: 2}
   brainPaused: 0
 --- !u!50 &1957959992
 Rigidbody2D:
