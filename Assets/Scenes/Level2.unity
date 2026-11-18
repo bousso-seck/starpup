@@ -336,6 +336,63 @@ Transform:
   - {fileID: 1957959995}
   m_Father: {fileID: 952603963}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &88430266
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1590033606}
+    m_Modifications:
+    - target: {fileID: 2300489163766142249, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -24.529547
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300489163766142249, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -10
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300489163766142249, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300489163766142249, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300489163766142249, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300489163766142249, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300489163766142249, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300489163766142249, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300489163766142249, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300489163766142249, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3704053648514960667, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+      propertyPath: m_Name
+      value: Wet Concrete
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
 --- !u!1 &385538914
 GameObject:
   m_ObjectHideFlags: 0
@@ -739,6 +796,64 @@ Transform:
   m_Children: []
   m_Father: {fileID: 44609944}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &760000291
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 760000292}
+  - component: {fileID: 760000293}
+  m_Layer: 0
+  m_Name: Bouncing Tires (2)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &760000292
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 760000291}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 10.22, y: -9.77, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1590033606}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &760000293
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 760000291}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0c0f330bf31544908c7cfce59cdff1a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BouncingTires
+  direction: -1
+  distance: 24
+  tireSize: {x: 1, y: 1}
+  tireCount: 1
+  tireSpacing: 5
+  bounceHeight: 2
+  bounceDistance: 5
+  tireColor: {r: 0.08, g: 0.08, b: 0.1, a: 1}
+  rimColor: {r: 0.55, g: 0.55, b: 0.6, a: 1}
+  triggerRange: 8
+  warningTime: 1
+  speed: 6
+  repeatDelay: 0
+  damage: 1
 --- !u!1 &805276227
 GameObject:
   m_ObjectHideFlags: 0
@@ -1847,6 +1962,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 805276228}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!4 &1251945053 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2300489163766142249, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+  m_PrefabInstance: {fileID: 2757524975068889650}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1333917137
 GameObject:
   m_ObjectHideFlags: 0
@@ -1938,8 +2058,71 @@ Transform:
   - {fileID: 2014790478}
   - {fileID: 949286587}
   - {fileID: 967657769}
+  - {fileID: 2138484981}
+  - {fileID: 1645009114}
+  - {fileID: 760000292}
+  - {fileID: 1251945053}
+  - {fileID: 1929684775}
   m_Father: {fileID: 952603963}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1645009113
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1645009114}
+  - component: {fileID: 1645009115}
+  m_Layer: 0
+  m_Name: Bouncing Tires (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1645009114
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1645009113}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 40.53, y: -9.77, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1590033606}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1645009115
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1645009113}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0c0f330bf31544908c7cfce59cdff1a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BouncingTires
+  direction: -1
+  distance: 24
+  tireSize: {x: 1, y: 1}
+  tireCount: 1
+  tireSpacing: 5
+  bounceHeight: 2
+  bounceDistance: 5
+  tireColor: {r: 0.08, g: 0.08, b: 0.1, a: 1}
+  rimColor: {r: 0.55, g: 0.55, b: 0.6, a: 1}
+  triggerRange: 8
+  warningTime: 1
+  speed: 6
+  repeatDelay: 0
+  damage: 1
 --- !u!1 &1766425757
 GameObject:
   m_ObjectHideFlags: 0
@@ -1991,6 +2174,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1590033606}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!4 &1929684775 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2300489163766142249, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+  m_PrefabInstance: {fileID: 88430266}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1941348696
 GameObject:
   m_ObjectHideFlags: 0
@@ -2331,6 +2519,125 @@ MonoBehaviour:
   fallGravity: 35
   repeatDelay: 0
   damage: 1
+--- !u!4 &2138484981 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3051490300833109967, guid: fccae7513728e470086b7bb6183d1408, type: 3}
+  m_PrefabInstance: {fileID: 3623526042220158680}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &2757524975068889650
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1590033606}
+    m_Modifications:
+    - target: {fileID: 2300489163766142249, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 2.15
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300489163766142249, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -10
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300489163766142249, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300489163766142249, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300489163766142249, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300489163766142249, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300489163766142249, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300489163766142249, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300489163766142249, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300489163766142249, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3704053648514960667, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+      propertyPath: m_Name
+      value: Wet Concrete
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 555ddf61dedfd4a0fa39151b56805633, type: 3}
+--- !u!1001 &3623526042220158680
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1590033606}
+    m_Modifications:
+    - target: {fileID: 3051490300833109967, guid: fccae7513728e470086b7bb6183d1408, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -28.58
+      objectReference: {fileID: 0}
+    - target: {fileID: 3051490300833109967, guid: fccae7513728e470086b7bb6183d1408, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -9.77
+      objectReference: {fileID: 0}
+    - target: {fileID: 3051490300833109967, guid: fccae7513728e470086b7bb6183d1408, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3051490300833109967, guid: fccae7513728e470086b7bb6183d1408, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3051490300833109967, guid: fccae7513728e470086b7bb6183d1408, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3051490300833109967, guid: fccae7513728e470086b7bb6183d1408, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3051490300833109967, guid: fccae7513728e470086b7bb6183d1408, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3051490300833109967, guid: fccae7513728e470086b7bb6183d1408, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3051490300833109967, guid: fccae7513728e470086b7bb6183d1408, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3051490300833109967, guid: fccae7513728e470086b7bb6183d1408, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5711991022538794259, guid: fccae7513728e470086b7bb6183d1408, type: 3}
+      propertyPath: m_Name
+      value: Bouncing Tires
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: fccae7513728e470086b7bb6183d1408, type: 3}
 --- !u!1001 &5696323474911412461
 PrefabInstance:
   m_ObjectHideFlags: 0

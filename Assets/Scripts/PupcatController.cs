@@ -23,6 +23,7 @@ public class PupcatController : MonoBehaviour
     public bool IsCrouching { get; private set; }
     public bool IsGrounded { get { return isGrounded; } }
     public bool IsKnockedBack { get { return Time.time < knockbackEndTime; } }
+    public bool IsStuckInWetConcrete { get; private set; }
     public int FacingDirection { get; private set; } = 1; // 1 = right, -1 = left
 
     private Rigidbody2D rb;
@@ -40,6 +41,9 @@ public class PupcatController : MonoBehaviour
     private bool airDashUsed;  // one dash per jump; landing gives it back
     private bool dashInAir;    // true while the current roll is an air dash
     private float nextTrail;   // when the next little dash puff is allowed
+    private WetConcrete wetConcrete;
+    private int wetConcreteJumpPresses;
+    private int wetConcreteJumpPressesRequired;
 
     void Awake()
     {
@@ -55,6 +59,24 @@ public class PupcatController : MonoBehaviour
     {
         // -1 = left (A or left arrow), 0 = nothing, 1 = right (D or right arrow)
         float horizontal = GameInput.Move;
+
+        if (IsStuckInWetConcrete)
+        {
+            rb.linearVelocity = Vector2.zero;
+            if (GameInput.JumpPressed)
+            {
+                wetConcreteJumpPresses++;
+                if (wetConcrete != null)
+                {
+                    wetConcrete.SetEscapeProgress(
+                        Mathf.Clamp01((float)wetConcreteJumpPresses / wetConcreteJumpPressesRequired));
+                }
+
+                if (wetConcreteJumpPresses >= wetConcreteJumpPressesRequired) EscapeWetConcrete();
+                else GameFeel.Play(GameFeel.Sound.Jump);
+            }
+            return;
+        }
 
         // Remember which way we last moved, so the roll goes that way.
         if (horizontal > 0f) FacingDirection = 1;
@@ -124,6 +146,49 @@ public class PupcatController : MonoBehaviour
         if (IsCrouching) SetCrouch(false);
         crouchLocked = true;
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+        GameFeel.Play(GameFeel.Sound.Jump);
+        GameFeel.Dust(Feet(), 3, 0f);
+    }
+
+    public void TrapInWetConcrete(WetConcrete concrete, int jumpPressesRequired)
+    {
+        if (concrete == null || IsStuckInWetConcrete) return;
+
+        if (IsDodging) CancelDodge();
+        if (IsCrouching) SetCrouch(false);
+        if (parry != null) parry.CancelGuard();
+
+        wetConcrete = concrete;
+        wetConcreteJumpPresses = 0;
+        wetConcreteJumpPressesRequired = Mathf.Max(1, jumpPressesRequired);
+        IsStuckInWetConcrete = true;
+        knockbackEndTime = 0f;
+        rb.linearVelocity = Vector2.zero;
+    }
+
+    public void ReleaseFromWetConcrete(WetConcrete concrete)
+    {
+        if (wetConcrete != concrete) return;
+
+        wetConcrete = null;
+        wetConcreteJumpPresses = 0;
+        wetConcreteJumpPressesRequired = 0;
+        IsStuckInWetConcrete = false;
+        if (rb != null) rb.linearVelocity = Vector2.zero;
+    }
+
+    void EscapeWetConcrete()
+    {
+        WetConcrete concrete = wetConcrete;
+        wetConcrete = null;
+        wetConcreteJumpPresses = 0;
+        wetConcreteJumpPressesRequired = 0;
+        IsStuckInWetConcrete = false;
+        isGrounded = false;
+        crouchLocked = true;
+
+        if (concrete != null) concrete.PlayerEscaped(this);
+        rb.linearVelocity = new Vector2(0f, jumpForce);
         GameFeel.Play(GameFeel.Sound.Jump);
         GameFeel.Dust(Feet(), 3, 0f);
     }
