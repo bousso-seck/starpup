@@ -28,6 +28,8 @@ public class GymTeacherBoss : MonoBehaviour
     public float windupBonus = 0.25f;   // wind-ups 25% shorter
     public float surgeAt = 0.5f;        // at this share of his health the grudge surges
     public float surgeExtra = 0.25f;    // the surge adds this much to the boost (1 = full)
+    public bool useTotalGrudge = false; // Level 2 boss: read everything banked from Level 1 plus this level
+    public int totalGrudgeMax = 18;     // the tally that counts as full strength when Use Total Grudge is on
     public int testGrudge = -1;         // for testing: 0 to 9 forces the grudge. -1 = use the real tally.
 
     [Header("Mechanic 2: Whistle rush")]
@@ -237,8 +239,9 @@ public class GymTeacherBoss : MonoBehaviour
 
     float CurrentBoost()
     {
-        int points = (testGrudge >= 0) ? Mathf.Min(testGrudge, Grudge.MaxPoints) : Grudge.Points;
-        return Mathf.Clamp01(points / (float)Grudge.MaxPoints);
+        int points = (testGrudge >= 0) ? testGrudge : (useTotalGrudge ? Grudge.Total : Grudge.Points);
+        int max = useTotalGrudge ? totalGrudgeMax : Grudge.MaxPoints;
+        return Mathf.Clamp01(points / (float)max);
     }
 
     void StartFight()
@@ -246,8 +249,8 @@ public class GymTeacherBoss : MonoBehaviour
         fightStarted = true;
         ApplyBoost();
         nextRush = Time.time + firstRushDelay;
-        int points = (testGrudge >= 0) ? testGrudge : Grudge.Points;
-        Debug.Log("Gym Teacher wakes up. Grudge " + points + "/" + Grudge.MaxPoints + " = boost " + Mathf.RoundToInt(boost * 100f)
+        int points = (testGrudge >= 0) ? testGrudge : (useTotalGrudge ? Grudge.Total : Grudge.Points);
+        Debug.Log("Gym Teacher wakes up. Grudge " + points + "/" + (useTotalGrudge ? totalGrudgeMax : Grudge.MaxPoints) + " = boost " + Mathf.RoundToInt(boost * 100f)
                   + "%: damage x" + (1f + damageBonus * boost).ToString("0.00") + ", speed x" + (1f + speedBonus * boost).ToString("0.00")
                   + ", wind-ups x" + (1f - windupBonus * boost).ToString("0.00") + (boost >= 0.66f ? ", double rush." : "."));
     }
