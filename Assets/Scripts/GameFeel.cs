@@ -11,7 +11,7 @@ using UnityEngine;
 //   GameFeel.Play(GameFeel.Sound.X)  a sound. By default a beep or thump made from code.
 //
 // TO USE REAL SOUNDS: make the folder Assets/Resources/Sfx and drop in audio files named exactly like
-// the sounds: Swing, Hit, Parry, Guard, Hurt, Jump, Land, Roll, Defeat, Heavy, Finisher, Dash
+// the sounds: Swing, Hit, Parry, Guard, Hurt, Jump, Land, Roll, Defeat, Heavy, Finisher, Dash, Flashbang, Ringing
 // (for example Assets/Resources/Sfx/Hit.wav). Roll = the ground roll, Dash = the air dash. A file with a matching name replaces the placeholder.
 // For several versions of one sound, number them: Roll1.wav, Roll2.wav, Roll3.wav (up to 9).
 // One of them is picked at random each time, so repeated sounds don't get boring.
@@ -28,7 +28,8 @@ public class GameFeel : MonoBehaviour
                         CrouchMiss, CrouchHit, AirMiss, AirHit, DashStrikeMiss, DashStrikeHit,
                         PotWarning, PotSmash,
                         EnemyWindup, EnemySwing, EnemyDefeat, EnemyThrow,
-                        BossWhistle, BossRush, BossSurge, GateSlam, GateRise }
+                        BossWhistle, BossRush, BossSurge, GateSlam, GateRise,
+                        Flashbang, Ringing }
 
     private const float MasterVolume = 0.7f; // turn all the placeholder sounds up or down here
 
@@ -115,6 +116,8 @@ public class GameFeel : MonoBehaviour
         clips[(int)Sound.HeavyMiss]   = MakeClip(0.25f, 250f, 80f, 0.9f, 10f, 0.4f);   // a heavy empty whoosh
         clips[(int)Sound.BikeBell] = MakeClip(0.35f, 1500f, 1500f, 0f, 7f, 0.35f);   // a bike bell ring
         clips[(int)Sound.BikeRide] = MakeClip(0.55f, 150f, 350f, 0.7f, 4f, 0.3f);    // a rising whoosh as it zips past
+        clips[(int)Sound.Flashbang] = MakeClip(0.55f, 2600f, 280f, 0.98f, 3.5f, 0.95f); // a harsher, longer blast
+        clips[(int)Sound.Ringing] = MakeClip(2.2f, 1700f, 1650f, 0.02f, 0.25f, 0.16f); // a sustained high-pitched ring
 
         // Real sound files in Assets/Resources/Sfx replace the placeholders above.
         // "Roll" is one file; "Roll1", "Roll2", ... are several versions to pick from at random.

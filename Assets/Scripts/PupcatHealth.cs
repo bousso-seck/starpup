@@ -28,6 +28,9 @@ public class PupcatHealth : MonoBehaviour
     private PupcatController controller;
     private SpriteRenderer sprite;
     private float hurtEndTime;
+    private float blindEndTime;
+    private float blindFlashStartTime;
+    private float blindFlashEndTime;
 
     void Awake()
     {
@@ -49,8 +52,19 @@ public class PupcatHealth : MonoBehaviour
     // Called by enemies. pushDirection is 1 to shove right, -1 to shove left.
     public void TakeDamage(int amount, float pushDirection)
     {
-        if (IsDefeated || amount <= 0) return;
-        if (Time.time < hurtEndTime) return; // still shaking off the last hit
+        ApplyDamage(amount, pushDirection, 0f);
+    }
+
+    // Returns false if the pupcat is defeated, invulnerable, or the damage is invalid.
+    public bool TakeDamageAndBlind(int amount, float pushDirection, float blindDuration)
+    {
+        return ApplyDamage(amount, pushDirection, blindDuration);
+    }
+
+    bool ApplyDamage(int amount, float pushDirection, float blindDuration)
+    {
+        if (IsDefeated || amount <= 0) return false;
+        if (Time.time < hurtEndTime) return false; // still shaking off the last hit
 
         hurtEndTime = Time.time + hurtInvincibility;
 
@@ -67,6 +81,14 @@ public class PupcatHealth : MonoBehaviour
         Debug.Log("Pupcat took " + amount + " damage. Hearts: " + Points / 2f + " + bonus " + BonusPoints / 2f);
 
         if (Points <= 0) Defeat();
+        if (blindDuration > 0f)
+        {
+            blindEndTime = Mathf.Max(blindEndTime, Time.time + blindDuration);
+            blindFlashStartTime = Time.time;
+            blindFlashEndTime = Time.time + Mathf.Min(0.25f, blindDuration);
+            GameFeel.Play(GameFeel.Sound.Ringing);
+        }
+        return true;
     }
 
     // Restores points. Anything over full becomes golden bonus hearts. Used by rewards later.
@@ -107,6 +129,16 @@ public class PupcatHealth : MonoBehaviour
     // Draws the hearts in the top-left corner with simple boxes.
     void OnGUI()
     {
+        if (Time.time < blindEndTime)
+        {
+            float flashProgress = Mathf.Clamp01((Time.time - blindFlashStartTime) /
+                Mathf.Max(0.01f, blindFlashEndTime - blindFlashStartTime));
+            float alpha = Time.time < blindFlashEndTime ? Mathf.Lerp(1f, 0.9f, flashProgress) : 0.9f;
+            GUI.color = new Color(1f, 1f, 1f, alpha);
+            GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), Texture2D.whiteTexture);
+            GUI.color = Color.white;
+        }
+
         float size = 36f;
         float gap = 8f;
         float x = 20f;
