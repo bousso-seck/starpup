@@ -2576,7 +2576,7 @@ MonoBehaviour:
   attackHeight: 1
   windUpTime: 0.8
   recoverTime: 1.4
-  damage: 0
+  damage: 1
   blindDuration: 2
 --- !u!114 &2065473847
 MonoBehaviour:
