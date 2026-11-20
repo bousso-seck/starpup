@@ -6,6 +6,10 @@ public class PupcatController : MonoBehaviour
 {
     [Header("Movement")]
     public float moveSpeed = 6f;
+
+    [Header("Slick Leaves")]
+    public bool IsOnSlickLeaves { get; set; }
+    public float slickLeavesAcceleration = 3f;
     public float jumpForce = 12f;
 
     [Header("Crouch (hold C, S or Down)")]
@@ -93,7 +97,7 @@ public class PupcatController : MonoBehaviour
         {
             // You can jump out of a roll that is on the ground.
             if (GameInput.JumpPressed && isGrounded)
-            {
+                        {
                 CancelDodge();
                 Jump();
                 return;
@@ -125,7 +129,12 @@ public class PupcatController : MonoBehaviour
 
         // Normal movement: keep the current up/down speed, only change left/right.
         float speed = IsCrouching ? moveSpeed * crouchSpeedMultiplier : moveSpeed;
-        rb.linearVelocity = new Vector2(horizontal * speed, rb.linearVelocity.y);
+        float targetVelocity = horizontal * speed;
+        float newVelocity = IsOnSlickLeaves
+            ? Mathf.MoveTowards(rb.linearVelocity.x, targetVelocity,
+                slickLeavesAcceleration * Time.deltaTime)
+            : targetVelocity;
+        rb.linearVelocity = new Vector2(newVelocity, rb.linearVelocity.y);
 
         // Jump only when Space is pressed AND we're standing on something. Jumping stands you up.
         if (GameInput.JumpPressed && isGrounded)
@@ -140,8 +149,7 @@ public class PupcatController : MonoBehaviour
             StartDodge();
         }
     }
-
-    void Jump()
+        void Jump()
     {
         if (IsCrouching) SetCrouch(false);
         crouchLocked = true;
