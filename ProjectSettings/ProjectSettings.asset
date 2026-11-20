@@ -169,7 +169,8 @@ PlayerSettings:
   androidSupportedAspectRatio: 1
   androidMaxAspectRatio: 2.1
   androidMinAspectRatio: 1
-  applicationIdentifier: {}
+  applicationIdentifier:
+    Standalone: com.DefaultCompany.starpup
   buildNumber:
     Standalone: 0
     VisionOS: 0
@@ -796,7 +797,7 @@ PlayerSettings:
   qnxGraphicConfPath: 
   apiCompatibilityLevel: 6
   captureStartupLogs: {}
-  activeInputHandler: 1
+  activeInputHandler: 2
   windowsGamepadBackendHint: 0
   cloudProjectId: 625a6450-c224-4ba0-9a3f-52662ab8f851
   framebufferDepthMemorylessMode: 0

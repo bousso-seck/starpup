@@ -17,5 +17,11 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Level2.unity
     guid: eacae59ee6f3c740d92c3dc6f8e3d90b
+  - enabled: 1
+    path: Assets/Scenes/GuitarMinigame.unity
+    guid: 3f5755fcfe5c541b39ea583e1d9e4331
+  - enabled: 1
+    path: Assets/Scenes/ExitMenu.unity
+    guid: 967a02413cfa34372878b7e3f7ca540a
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0
