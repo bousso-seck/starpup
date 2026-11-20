@@ -551,7 +551,7 @@ MonoBehaviour:
   maxFlames: 4
   summonInterval: 3
   detectionRange: 5
-  flameSpeed: 1
+  flameSpeed: 0.5
   flameLifetime: 6
   flameDamage: 1
 --- !u!1 &252097168
